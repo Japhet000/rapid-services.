@@ -1,22 +1,23 @@
-Rapid Services 3.0
-Application multilingue (français, anglais, swahili) pour restaurants, hôtels et centres de services.
-Fonctionnalités incluses
-Comptes propriétaires, connexion et séparation des données par établissement.
-Tableau de bord et gestion des commandes, réservations/rendez-vous, clients et catalogue.
-Suivi des montants, paiements et soldes; rapport CSV et impression.
-Factures imprimables / enregistrables en PDF depuis le navigateur.
-Personnalisation de l'établissement : nom, coordonnées, adresse, logo et couleurs.
-Paramètres de marque enregistrés dans PostgreSQL par établissement.
-Liens WhatsApp avec texte préparé; aucun envoi automatique n'est activé.
-Interface responsive pour téléphone et ordinateur.
-Déploiement sur Render
-Build command: npm install
-Start command: npm start
-Conserver les variables existantes DATABASE_URL et JWT_SECRET.
-Définir NODE_ENV=production.
-Ne pas supprimer la base PostgreSQL existante. Les nouvelles tables sont créées automatiquement.
+Rapid Services 3.2 — Abonnements et paiements manuels
+Cette version ajoute un espace Abonnement & paiements, l'historique des demandes, et un tableau d'administration privé pour vérifier manuellement les transactions. Les tables sont créées avec CREATE TABLE IF NOT EXISTS : les données existantes ne sont pas supprimées.
+Tarifs
+Basic : 10 USD / mois ou 60 000 BIF
+Professional : 15 USD / mois ou 90 000 BIF
+Business : 20 USD / mois ou 120 000 BIF
+Moyens de paiement configurés
+Lumicash : 69637418 — UWITONZE JAPHET
+BANCOBU eNoti : code agent 49094 — UWITONZE JAPHET
+USDT BEP20 : 0x5faaaf9ee6e8085489e63077a8382e77908af720
+Les paiements sont déclarés par l'utilisateur avec leur référence ou TXID puis vérifiés manuellement par le fondateur. Il n'y a pas de connexion API officielle Lumicash/eNoti ni de vérification blockchain automatique dans cette version. Ne marquez un paiement USDT comme approuvé qu'après vérification du TXID sur un explorateur BNB Smart Chain et confirmation de la réception du montant.
+Déploiement Render
+Build command : npm install
+Start command : npm start
+Conserver DATABASE_URL et JWT_SECRET existants.
+Ajouter une variable Render ADMIN_SECRET contenant un secret long et aléatoire (au moins 32 caractères). Ne mettez pas ce secret dans GitHub ni dans le code.
+Déployer.
+Administration
+Ouvrir https://VOTRE-DOMAINE/admin.html, entrer le même ADMIN_SECRET, puis approuver/refuser les paiements. L'approbation active ou prolonge l'abonnement de 30 jours. Le code secret est gardé uniquement dans sessionStorage du navigateur d'administration.
 Important
-L'envoi automatique WhatsApp est volontairement laissé désactivé pour le moment.
-Les factures PDF sont générées par la fonction Imprimer / Enregistrer en PDF du navigateur.
-Cette version ne comprend pas encore la gestion avancée des comptes employés, invitations et permissions détaillées.
-Avant une commercialisation, prévoir tests complets, sauvegardes, politique de confidentialité, conditions d'utilisation et audit de sécurité.
+Les fonctionnalités actuelles de l'application ne sont pas bloquées selon le statut d'abonnement dans cette version afin de préserver l'accès des comptes existants. Le statut et la validation des abonnements sont enregistrés ; la mise en place d'un blocage à l'expiration doit être décidée séparément.
+Les montants sont fixes côté serveur et ne sont pas acceptés depuis le navigateur.
+Aucune donnée métier ni aucun compte existant n'est supprimé.
