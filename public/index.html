@@ -56,76 +56,111 @@ $('brandLogoFile').addEventListener('change',e=>{
  if(!/^image\/(png|jpeg)$/.test(file.type)){alert('Choisissez un fichier PNG ou JPG.');e.target.value='';return;}
  if(file.size>1024*1024){alert('Le logo doit faire 1 Mo maximum.');e.target.value='';return;}
  const reader=new FileReader();reader.onload=()=>{branding.logo=reader.result;showLogoPreview()};reader.readAsDataURL(file);
-  });
+});
 function removeBrandLogo(){branding.logo='';$('brandLogoFile').value='';showLogoPreview()}
 async function saveBranding(){
  branding={...branding,name:$('brandName').value.trim(),phone:$('brandPhone').value.trim(),email:$('brandEmail').value.trim(),address:$('brandAddress').value.trim(),footer:$('brandFooter').value.trim(),color:$('brandColor').value,dark:$('brandDark').value};
- localStorage.setItem(brandingKey(),JSON.stringify(branding));
- try{await api('/api/settings',{method:'PUT',body:JSON.stringify({branding})})}catch(e){console.warn('Settings API:',e.message)}
- applyBranding();$('brandSaved').classList.remove('hidden');setTimeout(()=>$('brandSaved').classList.add('hidden'),2500);
+ try{localStorage.setItem(brandingKey(),JSON.stringify(branding));await api('/api/settings',{method:'PUT',body:JSON.stringify({branding})});applyBranding();$('brandSaved').classList.remove('hidden');setTimeout(()=>$('brandSaved').classList.add('hidden'),2500)}
+ catch(e){alert('Enregistrement impossible. Le logo est peut-être trop volumineux.')}
 }
-function money(v){return new Intl.NumberFormat(undefined,{style:'currency',currency:business?.currency||'USD'}).format(Number(v||0))}
-async function loadAll(){
- try{const d=await api('/api/records');records={orders:d.orders||[],bookings:d.bookings||[],customers:d.customers||[],catalog:d.catalog||[]};renderAll()}
- catch(e){alert('Chargement impossible : '+e.message)}
+function page(p){document.querySelectorAll('[id^="page-"]').forEach(x=>x.classList.add('hidden'));$('page-'+p).classList.remove('hidden');document.querySelectorAll('.side button').forEach(b=>b.classList.toggle('active',b.dataset.page===p))}document.querySelectorAll('.side button').forEach(b=>b.onclick=()=>page(b.dataset.page));
+async function loadAll() {
+    try {
+        const kinds = ['orders', 'bookings', 'customers', 'catalog'];
+
+        for (const kind of kinds) {
+            const data = await api('/api/records/' + kind);
+            records[kind] = Array.isArray(data) ? data : [];
+        }
+
+        renderAll();
+    } catch (e) {
+        console.error('Erreur de chargement :', e);
+        if (e.message && e.message.includes('Session')) {
+            $('logout').click();
+        } else {
+            alert('Chargement impossible : ' + e.message);
+        }
+    }
 }
 function renderAll(){
+ let revenue=0,paid=0;
+ for(const r of records.orders){const amount=Number(r.amount||0);revenue+=amount;paid+=Math.min(amount,Math.max(0,Number(r.paidAmount||0)));}
+ for(const k of Object.keys(records)){
+  const body=$('body-'+k);if(!body)continue;body.innerHTML='';
+  if(!records[k].length){body.innerHTML=`<tr><td colspan="8" class="empty">${t('empty')}</td></tr>`;continue}
+  for(const r of records[k]){
+   const tr=document.createElement('tr');let cells='';
+   if(k==='orders')cells=`<td>${esc(r.customer||'')}</td><td>${esc(r.detail||'')}</td><td>${esc(r.amount||'')}</td><td>${esc(r.status||'')}</td><td>${esc(r.paymentMethod||'—')} · ${esc(r.paymentStatus||'Non payé')}<br><small>Payé: ${esc(r.paidAmount||0)} / Reste: ${Math.max(0,Number(r.amount||0)-Number(r.paidAmount||0))}</small></td><td>${wa(r.phone)}</td>`;
+   if(k==='bookings')cells=`<td>${esc(r.customer||'')}</td><td>${esc(r.detail||'')}</td><td>${esc(r.date||'')}</td><td>${esc(r.status||'')}</td><td>${wa(r.phone)}</td>`;
+   if(k==='customers')cells=`<td>${esc(r.name||'')}</td><td>${esc(r.phone||'')}</td><td>${esc(r.email||'')}</td>`;
+   if(k==='catalog')cells=`<td>${esc(r.name||'')}</td><td>${esc(r.category||'')}</td><td>${esc(r.price||'')}</td>`;
+   const invoiceBtns = k==='orders' ? `<br><button class="soft" onclick="makeInvoice(${r.id})">Facture PDF</button> <button class="soft" onclick="sendInvoiceWhatsApp(${r.id})">Envoyer WhatsApp</button>` : '';
+   tr.innerHTML=cells+`<td>${invoiceBtns}<br><button class="soft" onclick="editRecord('${k}',${r.id})">Modifier</button> <button class="danger" onclick="removeRecord('${k}',${r.id})">×</button></td>`;
+   body.appendChild(tr);
+  }
+ }
  $('nOrders').textContent=records.orders.length;$('nBookings').textContent=records.bookings.length;$('nCustomers').textContent=records.customers.length;$('nCatalog').textContent=records.catalog.length;
- const total=records.orders.reduce((a,r)=>a+Number(r.amount||0),0),paid=records.orders.reduce((a,r)=>a+Number(r.paidAmount||0),0);
- $('revenueTotal').textContent=money(total);$('paidTotal').textContent=money(paid);$('dueTotal').textContent=money(Math.max(0,total-paid));
- renderTable('orders');renderTable('bookings');renderTable('customers');renderTable('catalog');
+ const currency=business?.currency||'USD';const fmt=n=>new Intl.NumberFormat(undefined,{maximumFractionDigits:2}).format(n)+' '+currency;
+ $('revenueTotal').textContent=fmt(revenue);$('paidTotal').textContent=fmt(paid);$('dueTotal').textContent=fmt(Math.max(0,revenue-paid));
 }
-function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function renderTable(k){
- const body=$('body-'+k);if(!body)return;const list=records[k]||[];
- if(!list.length){body.innerHTML=`<tr><td colspan="8" class="empty">${t('empty')}</td></tr>`;return}
- body.innerHTML=list.map(r=>{
-  const id=esc(r.id);
-  if(k==='customers')return `<tr><td>${esc(r.name)}</td><td>${esc(r.phone)}</td><td>${esc(r.email)}</td><td><button class="danger" onclick="removeRecord('customers','${id}')">Supprimer</button></td></tr>`;
-  if(k==='catalog')return `<tr><td>${esc(r.name)}</td><td>${esc(r.category)}</td><td>${money(r.price)}</td><td><button class="danger" onclick="removeRecord('catalog','${id}')">Supprimer</button></td></tr>`;
-  const amount=k==='orders'?money(r.amount):esc(r.date||'');
-  const payment=k==='orders'?`<td>${money(r.paidAmount||0)} / ${money(r.amount||0)}<br>${esc(r.paymentMethod||'')}</td>`:`<td>${esc(r.paymentStatus||'')}</td>`;
-  const whatsapp=`<td><button class="soft" onclick="sendWhatsApp('${k}','${id}')">WhatsApp</button></td>`;
-  return `<tr><td>${esc(r.customer)}</td><td>${esc(r.detail)}</td><td>${amount}</td><td><span class="tag">${esc(r.status||'')}</span></td>${payment}${whatsapp}<td><button class="danger" onclick="removeRecord('${k}','${id}')">Supprimer</button></td></tr>`;
- }).join('');
-}
-function openPage(page){
- document.querySelectorAll('[id^="page-"]').forEach(el=>el.classList.add('hidden'));
- $('page-'+page).classList.remove('hidden');
- document.querySelectorAll('.side button').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
-}
-document.querySelectorAll('.side button').forEach(b=>b.onclick=()=>openPage(b.dataset.page));
-function openAdd(k){
- const form=$('recordForm');form.innerHTML='';$('modalTitle').textContent=t(({orders:'addorder',bookings:'addbooking',customers:'addcustomer',catalog:'additem'})[k]);
- const field=(name,label,type='text',required=true)=>`<div class="field"><label>${label}</label><input name="${name}" type="${type}" ${required?'required':''}></div>`;
- if(k==='orders'){
-  form.innerHTML=field('customer',t('customer'))+field('detail',t('description'))+field('amount',t('amount'),'number')+field('paidAmount','Montant payé','number',false)+`<div class="field"><label>Mode de paiement</label><select name="paymentMethod"><option>Cash</option><option>Mobile Money</option><option>Bank transfer</option><option>Card</option></select></div><div class="field"><label>${t('status')}</label><select name="status"><option>New</option><option>Preparing</option><option>Completed</option></select></div>`;
- }
- if(k==='bookings'){
-  form.innerHTML=field('customer',t('customer'))+field('detail',t('description'))+field('date',t('datehour'),'datetime-local')+`<div class="field"><label>${t('status')}</label><select name="status"><option>New</option><option>Confirmed</option><option>Completed</option><option>Cancelled</option></select></div>`;
- }
- if(k==='customers'){
-  form.innerHTML=field('name',t('name'))+field('phone',t('phone'))+field('email','E-mail','email',false);
- }
- if(k==='catalog'){
-  form.innerHTML=field('name',t('itemname'))+field('category',t('category'))+field('price',t('price'),'number');
- }
- form.innerHTML+=`<div class="actions"><button type="button" class="soft" onclick="closeModal()">${t('cancel')}</button><button class="primary">${t('save')}</button></div>`;
- form.onsubmit=async e=>{
-  e.preventDefault();const data=Object.fromEntries(new FormData(form));
-  if(k==='orders'||k==='catalog'){data.amount=Number(data.amount||0);if(k==='orders')data.paidAmount=Number(data.paidAmount||0);if(k==='catalog')data.price=data.amount,delete data.amount}
-  try{await api('/api/records/'+k,{method:'POST',body:JSON.stringify(data)});closeModal();await loadAll()}catch(err){alert(err.message)}
- };
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function wa(phone){if(!phone)return '—';const n=String(phone).replace(/[^0-9]/g,'');return `<a href="https://wa.me/${n}" target="_blank" rel="noopener">WhatsApp</a>`}
+function openAdd(kind){buildRecordForm(kind,null)}
+function editRecord(kind,id){const record=records[kind].find(x=>Number(x.id)===Number(id));if(record)buildRecordForm(kind,record)}
+function buildRecordForm(kind,record){
+ const form=$('recordForm'),editing=!!record;const val=k=>record?.[k]??'';
+ $('modalTitle').textContent=(editing?'Modifier : ':'Ajouter : ')+(kind==='orders'?t('orders'):kind==='bookings'?t('bookings'):kind==='customers'?t('customers'):t('catalog'));
+ const field=(label,name,type='text',required=true)=>`<div class="field"><label>${label}</label><input name="${name}" type="${type}" value="${esc(val(name))}" ${required?'required':''}></div>`;
+ const select=(label,name,opts)=>`<div class="field"><label>${label}</label><select name="${name}">${opts.map(o=>`<option value="${esc(o)}" ${val(name)===o?'selected':''}>${esc(o)}</option>`).join('')}</select></div>`;
+ let fields='';
+ if(kind==='orders')fields=field(t('customer'),'customer')+field(t('phone'),'phone')+field(t('description'),'detail')+field(t('amount'),'amount','number')+select(t('status'),'status',[t('newstatus'),t('confirmed'),t('preparing'),t('done')])+field('Montant payé','paidAmount','number',false)+select('Mode de paiement','paymentMethod',['Espèces','Mobile Money','Carte bancaire','Virement','Autre'])+select('État du paiement','paymentStatus',['Non payé','Partiellement payé','Payé']);
+ if(kind==='bookings')fields=field(t('customer'),'customer')+field(t('phone'),'phone')+field(t('description'),'detail')+field(t('datehour'),'date','datetime-local')+select(t('status'),'status',[t('newstatus'),t('confirmed'),t('done')]);
+ if(kind==='customers')fields=field(t('name'),'name')+field(t('phone'),'phone')+field(t('email'),'email','email',false);
+ if(kind==='catalog')fields=field(t('itemname'),'name')+field(t('category'),'category')+field(t('price'),'price','number');
+ form.innerHTML=fields+`<div class="actions"><button type="button" class="soft" onclick="closeModal()">${t('cancel')}</button><button class="primary">${t('save')}</button></div>`;
+ form.onsubmit=async e=>{e.preventDefault();try{const payload=Object.fromEntries(new FormData(form));if(kind==='orders'){payload.amount=Number(payload.amount||0);payload.paidAmount=Number(payload.paidAmount||0);payload.paymentStatus=payload.paidAmount>=payload.amount&&payload.amount>0?'Payé':payload.paidAmount>0?'Partiellement payé':'Non payé';}await api('/api/records/'+kind+(editing?'/'+record.id:''),{method:editing?'PUT':'POST',body:JSON.stringify(payload)});closeModal();await loadAll()}catch(err){alert(err.message)}};
  $('modal').classList.add('show');
 }
-async function sendWhatsApp(k,id){
- const r=records[k].find(x=>String(x.id)===String(id));if(!r)return;
- const phone=(r.phone||r.customerPhone||business?.whatsapp||'').replace(/[^\d]/g,'');
- if(!phone){alert('Aucun numéro WhatsApp disponible. Ajoutez le numéro du client ou celui de votre établissement.');return}
- const message=k==='orders'?`Bonjour ${r.customer||''}, concernant votre commande : ${r.detail||''}. Montant : ${money(r.amount)}. Merci.`:`Bonjour ${r.customer||''}, concernant votre réservation : ${r.detail||''}. Date : ${r.date||''}. Merci.`;
- const url='https://wa.me/'+phone+'?text='+encodeURIComponent(message);
- window.open(url,'_blank','noopener');
+
+function invoiceData(id){
+ const order=records.orders.find(x=>Number(x.id)===Number(id));
+ if(!order) throw new Error('Commande introuvable.');
+ const currency=business?.currency||'USD';
+ const amount=Number(order.amount||0), paid=Number(order.paidAmount||0);
+ const date=order.createdAt ? new Date(order.createdAt) : new Date();
+ const invoiceNo='RS-'+String(order.id).padStart(5,'0');
+ return {order,currency,amount,paid,due:Math.max(0,amount-paid),date,invoiceNo};
 }
+function invoiceDocument(d){
+ const bname=esc(branding.name||business?.name||'Rapid Services');\n const bphone=esc(branding.phone||business?.whatsapp||'');const bemail=esc(branding.email||'');const baddress=esc(branding.address||'');const bfooter=esc(branding.footer||'Merci pour votre confiance.');const logo=branding.logo||'';const mainColor=branding.color||'#2368e8';const darkColor=branding.dark||'#102b46';
+ const customer=esc(d.order.customer||'Client');
+ const detail=esc(d.order.detail||'Prestation / commande');
+ const phone=esc(d.order.phone||'');
+ const fmt=n=>new Intl.NumberFormat(undefined,{maximumFractionDigits:2}).format(n)+' '+esc(d.currency);
+ return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Facture ${d.invoiceNo}</title><style>
+ body{font:15px Arial,sans-serif;color:#203044;margin:0;padding:35px;background:#f3f6fb}.invoice{max-width:780px;margin:auto;background:white;padding:42px;border:1px solid #dce4ed}.head{display:flex;justify-content:space-between;gap:20px;border-bottom:3px solid ${mainColor};padding-bottom:20px}.brand{font-size:26px;font-weight:bold;color:${darkColor}}.muted{color:#68798c}.meta{margin:25px 0;display:flex;justify-content:space-between;gap:15px}.box{background:#f5f8fc;padding:15px;border-radius:8px}table{width:100%;border-collapse:collapse;margin:25px 0}th,td{text-align:left;padding:13px;border-bottom:1px solid #dce4ed}th{background:#f5f8fc}.totals{margin-left:auto;width:min(330px,100%)}.totals div{display:flex;justify-content:space-between;padding:7px}.grand{font-size:20px;font-weight:bold;border-top:2px solid #102b46;margin-top:8px;padding-top:12px!important}.footer{margin-top:45px;border-top:1px solid #dce4ed;padding-top:15px;color:#68798c;font-size:12px}.controls{max-width:780px;margin:15px auto;display:flex;gap:10px;flex-wrap:wrap}.controls button{padding:12px 16px;border:0;border-radius:8px;background:${mainColor};color:white;font-weight:bold}@media print{body{background:white;padding:0}.invoice{border:0;padding:15mm}.controls{display:none}}</style></head><body>
+ <div class="controls"><button onclick="window.print()">Télécharger / enregistrer en PDF</button><button onclick="window.close()">Fermer</button></div>
+ <article class="invoice"><div class="head"><div><div class="brand">${logo?`<img src="${logo}" style="max-width:125px;max-height:65px;object-fit:contain;display:block;margin-bottom:8px">`:}${bname}</div><div class="muted">Facture client</div></div><div><strong>FACTURE</strong><br>${d.invoiceNo}<br><span class="muted">${d.date.toLocaleDateString()}</span></div></div>
+ <div class="meta"><div class="box"><strong>Facturé à</strong><br>${customer}<br>${phone}</div><div class="box"><strong>Établissement</strong><br>${bname}<br>${bphone}<br>${bemail}<br>${baddress}</div></div>
+ <table><thead><tr><th>Description</th><th>Montant</th></tr></thead><tbody><tr><td>${detail}</td><td>${fmt(d.amount)}</td></tr></tbody></table>
+ <div class="totals"><div><span>Total</span><strong>${fmt(d.amount)}</strong></div><div><span>Déjà payé</span><strong>${fmt(d.paid)}</strong></div><div class="grand"><span>Reste à payer</span><span>${fmt(d.due)}</span></div></div>
+ <div class="footer">${bfooter} · Facture générée avec Rapid Services. Numéro : ${d.invoiceNo}.</div></article></body></html>`;
+}
+function makeInvoice(id){
+ try{const d=invoiceData(id);const w=window.open('','_blank');if(!w){alert('Autorisez les fenêtres pop-up pour générer la facture.');return;}w.document.open();w.document.write(invoiceDocument(d));w.document.close();}catch(e){alert(e.message)}
+}
+function sendInvoiceWhatsApp(id){
+ try{
+  const d=invoiceData(id),phone=String(d.order.phone||'').replace(/[^0-9]/g,'');
+  if(!phone){alert('Ajoutez le numéro WhatsApp du client dans la commande, puis réessayez.');return;}
+  const fmt=n=>new Intl.NumberFormat(undefined,{maximumFractionDigits:2}).format(n)+' '+d.currency;
+  const message=`Bonjour ${d.order.customer||''}, voici les informations de votre facture ${d.invoiceNo} de ${business?.name||'Rapid Services'}.\nMontant total : ${fmt(d.amount)}\nDéjà payé : ${fmt(d.paid)}\nReste à payer : ${fmt(d.due)}\nMerci pour votre confiance.`;
+  const url='https://wa.me/'+phone+'?text='+encodeURIComponent(message);
+  window.open(url,'_blank','noopener');
+  alert('WhatsApp va s’ouvrir avec le message préparé. Pour joindre le PDF, générez d’abord la facture avec « Facture PDF », enregistrez-la, puis ajoutez le fichier dans la conversation WhatsApp.');
+ }catch(e){alert(e.message)}
+}
+
 function exportReport(){const rows=[['Type','Client/Nom','Détail','Montant','Payé','Mode paiement','Statut','Date']];for(const [kind,list] of Object.entries(records))for(const r of list)rows.push([kind,r.customer||r.name||'',r.detail||r.category||'',r.amount??r.price??'',r.paidAmount??'',r.paymentMethod||'',r.status||r.paymentStatus||'',r.date||r.createdAt||'']);const csv=rows.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\r\n');const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='rapid-services-rapport.csv';a.click();URL.revokeObjectURL(a.href)}
 function printReport(){window.print()}
 function closeModal(){$('modal').classList.remove('show')}async function removeRecord(k,id){if(!confirm('Delete?'))return;try{await api(`/api/records/${k}/${id}`,{method:'DELETE'});await loadAll()}catch(e){alert(e.message)}}
