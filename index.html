@@ -1,787 +1,187 @@
-<!doctype html>
-<html lang="fr">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#102b46">
-<title>Rapid Services</title>
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#102b46"><title>Rapid Services</title>
 <style>
-:root{--navy:#102b46;--blue:#2368e8;--bg:#f3f6fb;--ink:#1d2b3a;--muted:#718096;--line:#e3eaf2;--green:#15966a}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,Arial}
-.hidden{display:none!important}button,input,select,textarea{font:inherit}button{cursor:pointer;border:0;border-radius:9px;padding:10px 14px;font-weight:700}
-.primary{background:var(--blue);color:white}.soft{background:#eaf1fb;color:#24415d}.danger{background:#fff0f0;color:#b43e3e}
-.wrap{max-width:1200px;margin:auto;padding:22px}.brand{font-size:24px;font-weight:850;color:var(--navy)}.brand span{color:var(--blue)}
-.auth{max-width:480px;margin:6vh auto;background:white;padding:28px;border:1px solid var(--line);border-radius:18px;box-shadow:0 12px 35px #183b5b10}
-.auth h1{margin:5px 0}.muted{color:var(--muted)}.field{display:grid;gap:5px;margin:12px 0}.field label{font-size:13px;font-weight:700;color:#52677d}
-.field input,.field select,.field textarea{width:100%;padding:11px;border:1px solid var(--line);border-radius:9px;background:white}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.top{background:white;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:3}
-.topinner{max-width:1200px;margin:auto;padding:13px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.topright{display:flex;align-items:center;gap:10px}.top select{padding:8px;border:1px solid var(--line);border-radius:8px;background:white}
-.shell{display:grid;grid-template-columns:220px 1fr;gap:20px;max-width:1200px;margin:auto;padding:22px}
-.side{background:var(--navy);color:white;padding:16px;border-radius:15px;height:max-content;position:sticky;top:85px}
-.side button{display:block;width:100%;text-align:left;margin:4px 0;background:transparent;color:#d4e2ef}
-.side button.active,.side button:hover{background:#ffffff20}.main{min-width:0}
-.heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}.heading h1{font-size:23px;margin:0}
-.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
-.card{background:white;border:1px solid var(--line);border-radius:14px;padding:16px}.num{font-size:26px;font-weight:850}
-.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}.toolbar input{padding:10px;border:1px solid var(--line);border-radius:9px;min-width:200px}
-.tablebox{overflow:auto;background:white;border:1px solid var(--line);border-radius:13px}table{width:100%;border-collapse:collapse;min-width:760px}
-th,td{text-align:left;padding:12px;border-bottom:1px solid var(--line);font-size:13px}th{color:var(--muted)}
-.tag{background:#edf4ff;color:#2860b8;border-radius:20px;padding:4px 8px}
-.notice{padding:10px 12px;border-radius:9px;background:#fff7e8;color:#865b13;margin:12px 0;font-size:13px}
-.error{color:#b43e3e;font-size:13px}.modal{position:fixed;inset:0;background:#071a2d99;display:none;align-items:center;justify-content:center;padding:15px;z-index:10}
-.modal.show{display:flex}.modalbox{width:min(540px,100%);max-height:90vh;overflow:auto;background:white;border-radius:16px;padding:22px}
-.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:15px}.empty{text-align:center;color:var(--muted);padding:30px}
-.status{font-size:12px;color:#177b59;background:#eaf8f1;border-radius:20px;padding:4px 8px}
-@media(max-width:800px){.shell{grid-template-columns:1fr;padding:12px}.side{position:static;display:flex;overflow:auto;gap:5px;padding:8px}.side button{white-space:nowrap;width:auto}.cards{grid-template-columns:repeat(2,1fr)}.wrap{padding:12px}.topinner{padding:10px 12px}.heading{align-items:flex-start;flex-direction:column}}
-@media(max-width:480px){.row{grid-template-columns:1fr}.topright .useremail{display:none}.auth{margin:2vh auto;padding:20px}}
+:root{--navy:#102b46;--blue:#2368e8;--bg:#f3f6fb;--ink:#1d2b3a;--muted:#718096;--line:#e3eaf2;--green:#15966a}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,Arial}.hidden{display:none!important}button,input,select,textarea{font:inherit}button{cursor:pointer;border:0;border-radius:9px;padding:10px 14px;font-weight:700}.primary{background:var(--blue);color:white}.soft{background:#eaf1fb;color:#24415d}.danger{background:#fff0f0;color:#b43e3e}.wrap{max-width:1200px;margin:auto;padding:22px}.brand{font-size:24px;font-weight:850;color:var(--navy)}.brand span{color:var(--blue)}.auth{max-width:480px;margin:6vh auto;background:white;padding:28px;border:1px solid var(--line);border-radius:18px;box-shadow:0 12px 35px #183b5b10}.auth h1{margin:5px 0}.muted{color:var(--muted)}.field{display:grid;gap:5px;margin:12px 0}.field label{font-size:13px;font-weight:700;color:#52677d}.field input,.field select,.field textarea{width:100%;padding:11px;border:1px solid var(--line);border-radius:9px;background:white}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.top{background:white;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:3}.topinner{max-width:1200px;margin:auto;padding:13px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px}.topright{display:flex;align-items:center;gap:10px}.top select{padding:8px;border:1px solid var(--line);border-radius:8px;background:white}.shell{display:grid;grid-template-columns:220px 1fr;gap:20px;max-width:1200px;margin:auto;padding:22px}.side{background:var(--navy);color:white;padding:16px;border-radius:15px;height:max-content;position:sticky;top:85px}.side button{display:block;width:100%;text-align:left;margin:4px 0;background:transparent;color:#d4e2ef}.side button.active,.side button:hover{background:#ffffff20}.main{min-width:0}.heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}.heading h1{font-size:23px;margin:0}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}.card{background:white;border:1px solid var(--line);border-radius:14px;padding:16px}.num{font-size:26px;font-weight:850}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}.toolbar input{padding:10px;border:1px solid var(--line);border-radius:9px;min-width:200px}.tablebox{overflow:auto;background:white;border:1px solid var(--line);border-radius:13px}table{width:100%;border-collapse:collapse;min-width:760px}th,td{text-align:left;padding:12px;border-bottom:1px solid var(--line);font-size:13px}th{color:var(--muted)}.tag{background:#edf4ff;color:#2860b8;border-radius:20px;padding:4px 8px}.notice{padding:10px 12px;border-radius:9px;background:#fff7e8;color:#865b13;margin:12px 0;font-size:13px}.error{color:#b43e3e;font-size:13px}.modal{position:fixed;inset:0;background:#071a2d99;display:none;align-items:center;justify-content:center;padding:15px;z-index:10}.modal.show{display:flex}.modalbox{width:min(540px,100%);max-height:90vh;overflow:auto;background:white;border-radius:16px;padding:22px}.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:15px}.empty{text-align:center;color:var(--muted);padding:30px}.status{font-size:12px;color:#177b59;background:#eaf8f1;border-radius:20px;padding:4px 8px}@media(max-width:800px){.shell{grid-template-columns:1fr;padding:12px}.side{position:static;display:flex;overflow:auto;gap:5px;padding:8px}.side button{white-space:nowrap;width:auto}.cards{grid-template-columns:repeat(2,1fr)}.wrap{padding:12px}.topinner{padding:10px 12px}.heading{align-items:flex-start;flex-direction:column}}@media(max-width:480px){.row{grid-template-columns:1fr}.topright .useremail{display:none}.auth{margin:2vh auto;padding:20px}}
 @media print{.top,.side,.toolbar,.heading button,.modal,.notice{display:none!important}.shell{display:block;padding:0}.card,.tablebox{break-inside:avoid;border:1px solid #bbb}body{background:#fff}}
-</style>
-</head>
-<body>
-<div class="top"><div class="topinner">
-  <div class="brand">Rapid <span>Services</span></div>
-  <div class="topright">
-    <select id="lang"><option value="fr">Français</option><option value="en">English</option><option value="sw">Kiswahili</option></select>
-    <span id="userEmail" class="muted useremail"></span>
-    <button id="logout" class="soft hidden" data-i="logout">Déconnexion</button>
-  </div>
-</div></div>
-
-<section id="authView" class="wrap">
-<div class="auth">
-  <h1 data-i="welcome">Gérez votre activité simplement</h1>
-  <p class="muted" data-i="sub">Commandes, réservations, rendez-vous et clients au même endroit.</p>
-  <div class="row">
-    <button id="loginTab" class="primary" data-i="login">Connexion</button>
-    <button id="registerTab" class="soft" data-i="create">Créer un compte</button>
-  </div>
-  <form id="loginForm">
-    <div class="field"><label data-i="email">E-mail</label><input name="email" type="email" required autocomplete="email"></div>
-    <div class="field"><label data-i="password">Mot de passe</label><input name="password" type="password" required autocomplete="current-password"></div>
-    <button class="primary" style="width:100%" data-i="login">Connexion</button>
-  </form>
-  <form id="registerForm" class="hidden">
-    <div class="field"><label data-i="business">Nom de l'établissement</label><input name="businessName" required></div>
-    <div class="field"><label data-i="type">Type d'activité</label><select name="businessType"><option value="restaurant">Restaurant</option><option value="hotel">Hôtel</option><option value="service">Centre de services</option><option value="other">Autre</option></select></div>
-    <div class="field"><label data-i="yourname">Votre nom</label><input name="name" required></div>
-    <div class="field"><label data-i="email">E-mail</label><input name="email" type="email" required></div>
-    <div class="field"><label data-i="password10">Mot de passe (10 caractères minimum)</label><input name="password" type="password" minlength="10" required></div>
-    <div class="row">
-      <div class="field"><label data-i="currency">Devise</label><select name="currency"><option>USD</option><option>BIF</option><option>EUR</option><option>KES</option><option>TZS</option></select></div>
-      <div class="field"><label data-i="whatsapp">WhatsApp</label><input name="whatsapp" placeholder="257..." inputmode="tel"></div>
-    </div>
-    <button class="primary" style="width:100%" data-i="create">Créer un compte</button>
-  </form>
-  <p id="authError" class="error"></p>
-  <div class="notice" data-i="secure">Chaque établissement possède son espace privé. Les données sont isolées entre les comptes.</div>
-</div>
-</section>
-
-<section id="appView" class="hidden">
-<div class="shell">
-<nav class="side">
-  <button class="active" data-page="dashboard" data-i="dashboard">Tableau de bord</button>
-  <button data-page="orders" data-i="orders">Commandes</button>
-  <button data-page="bookings" data-i="bookings">Réservations & RDV</button>
-  <button data-page="customers" data-i="customers">Clients</button>
-  <button data-page="catalog" data-i="catalog">Catalogue</button>
-  <button data-page="settings">Personnalisation</button>
-</nav>
-<main class="main">
-  <div class="heading"><div><h1 id="businessTitle">Rapid Services</h1><span class="muted" id="businessType"></span></div><span class="status" data-i="private">Espace privé</span></div>
-
-  <section id="page-dashboard">
-    <div class="cards">
-      <div class="card"><div class="muted" data-i="orders">Commandes</div><div class="num" id="nOrders">0</div></div>
-      <div class="card"><div class="muted" data-i="bookings">Réservations & RDV</div><div class="num" id="nBookings">0</div></div>
-      <div class="card"><div class="muted" data-i="customers">Clients</div><div class="num" id="nCustomers">0</div></div>
-      <div class="card"><div class="muted" data-i="catalog">Catalogue</div><div class="num" id="nCatalog">0</div></div>
-      <div class="card"><div class="muted">Chiffre d'affaires</div><div class="num" id="revenueTotal">0</div></div>
-      <div class="card"><div class="muted">Montant encaissé</div><div class="num" id="paidTotal">0</div></div>
-      <div class="card"><div class="muted">Reste à encaisser</div><div class="num" id="dueTotal">0</div></div>
-    </div>
-    <div class="toolbar"><button class="soft" onclick="exportReport()">Exporter CSV</button><button class="soft" onclick="printReport()">Imprimer le rapport</button></div>
-    <div class="card"><h3 data-i="gettingstarted">Votre espace de gestion est prêt</h3><p class="muted" data-i="intro">Ajoutez vos commandes, réservations, clients et produits. Vous pouvez changer de langue à tout moment.</p></div>
-  </section>
-
-  <section id="page-orders" class="hidden">
-    <div class="heading"><h1 data-i="orders">Commandes</h1><button class="primary" onclick="openAdd('orders')" data-i="addorder">+ Nouvelle commande</button></div>
-    <div class="tablebox"><table><thead><tr><th data-i="customer">Client</th><th data-i="detail">Détail</th><th data-i="amount">Montant</th><th data-i="status">Statut</th><th>Paiement</th><th>WhatsApp</th><th></th></tr></thead><tbody id="body-orders"></tbody></table></div>
-  </section>
-  <section id="page-bookings" class="hidden">
-    <div class="heading"><h1 data-i="bookings">Réservations & RDV</h1><button class="primary" onclick="openAdd('bookings')" data-i="addbooking">+ Ajouter</button></div>
-    <div class="tablebox"><table><thead><tr><th data-i="customer">Client</th><th data-i="detail">Détail</th><th data-i="date">Date</th><th data-i="status">Statut</th><th>WhatsApp</th><th></th></tr></thead><tbody id="body-bookings"></tbody></table></div>
-  </section>
-  <section id="page-customers" class="hidden">
-    <div class="heading"><h1 data-i="customers">Clients</h1><button class="primary" onclick="openAdd('customers')" data-i="addcustomer">+ Nouveau client</button></div>
-    <div class="tablebox"><table><thead><tr><th data-i="name">Nom</th><th data-i="phone">Téléphone</th><th>E-mail</th><th></th></tr></thead><tbody id="body-customers"></tbody></table></div>
-  </section>
-  <section id="page-catalog" class="hidden">
-    <div class="heading"><h1 data-i="catalog">Catalogue</h1><button class="primary" onclick="openAdd('catalog')" data-i="additem">+ Ajouter un élément</button></div>
-    <div class="tablebox"><table><thead><tr><th data-i="name">Nom</th><th data-i="category">Catégorie</th><th data-i="price">Prix</th><th></th></tr></thead><tbody id="body-catalog"></tbody></table></div>
-  </section>
-  <section id="page-settings" class="hidden">
-    <div class="heading"><h1>Personnalisation de l'entreprise</h1><span class="muted">Identité et factures</span></div>
-    <div class="card">
-      <div class="row">
-        <div class="field"><label>Nom de l'entreprise</label><input id="brandName" placeholder="Nom affiché"></div>
-        <div class="field"><label>Téléphone / WhatsApp</label><input id="brandPhone" placeholder="+257..."></div>
-      </div>
-      <div class="row">
-        <div class="field"><label>E-mail</label><input id="brandEmail" type="email"></div>
-        <div class="field"><label>Adresse</label><input id="brandAddress"></div>
-      </div>
-      <div class="field"><label>Message en bas de facture</label><input id="brandFooter" value="Merci pour votre confiance."></div>
-      <div class="row">
-        <div class="field"><label>Couleur principale</label><input id="brandColor" type="color" value="#2368e8"></div>
-        <div class="field"><label>Couleur secondaire</label><input id="brandDark" type="color" value="#102b46"></div>
-      </div>
-      <div class="field"><label>Logo (PNG ou JPG, 1 Mo maximum)</label><input id="brandLogoFile" type="file" accept="image/png,image/jpeg"><div id="logoPreview" class="muted">Aucun logo sélectionné</div><button class="soft" type="button" onclick="removeBrandLogo()">Retirer le logo</button></div>
-      <div class="toolbar"><button class="primary" type="button" onclick="saveBranding()">Enregistrer la personnalisation</button><span id="brandSaved" class="status hidden">Enregistré</span></div>
-      <p id="brandError" class="error"></p>
-    </div>
-  </section>
-</main>
-</div>
-</section>
-
-<div id="modal" class="modal"><div class="modalbox"><h2 id="modalTitle"></h2><form id="recordForm"></form></div></div>
-<script>
-'use strict';
-
-const dict={
-fr:{logout:'Déconnexion',welcome:'Gérez votre activité simplement',sub:'Commandes, réservations, rendez-vous et clients au même endroit.',login:'Connexion',create:'Créer un compte',email:'E-mail',password:'Mot de passe',business:'Nom de l’établissement',type:'Type d’activité',yourname:'Votre nom',password10:'Mot de passe (10 caractères minimum)',currency:'Devise',whatsapp:'WhatsApp',secure:'Chaque établissement possède son espace privé.',dashboard:'Tableau de bord',orders:'Commandes',bookings:'Réservations & RDV',customers:'Clients',catalog:'Catalogue',private:'Espace privé',gettingstarted:'Votre espace de gestion est prêt',intro:'Ajoutez vos commandes, réservations, clients et produits.',addorder:'+ Nouvelle commande',addbooking:'+ Ajouter',addcustomer:'+ Nouveau client',additem:'+ Ajouter un élément',customer:'Client',detail:'Détail',amount:'Montant',status:'Statut',date:'Date',name:'Nom',phone:'Téléphone',category:'Catégorie',price:'Prix',empty:'Aucune donnée pour le moment.',save:'Enregistrer',cancel:'Annuler',description:'Description',datehour:'Date et heure',newstatus:'Nouveau',confirmed:'Confirmé',preparing:'En préparation',done:'Terminé',paid:'Payé',itemname:'Nom du produit ou service',error:'Une erreur est survenue.'},
-en:{logout:'Log out',welcome:'Manage your business easily',sub:'Orders, bookings, appointments and customers in one place.',login:'Login',create:'Create account',email:'Email',password:'Password',business:'Business name',type:'Business type',yourname:'Your name',password10:'Password (at least 10 characters)',currency:'Currency',whatsapp:'WhatsApp',secure:'Each business has its own private workspace.',dashboard:'Dashboard',orders:'Orders',bookings:'Bookings & Appointments',customers:'Customers',catalog:'Catalog',private:'Private workspace',gettingstarted:'Your workspace is ready',intro:'Add orders, bookings, customers and products.',addorder:'+ New order',addbooking:'+ Add booking',addcustomer:'+ New customer',additem:'+ Add item',customer:'Customer',detail:'Details',amount:'Amount',status:'Status',date:'Date',name:'Name',phone:'Phone',category:'Category',price:'Price',empty:'No data yet.',save:'Save',cancel:'Cancel',description:'Description',datehour:'Date and time',newstatus:'New',confirmed:'Confirmed',preparing:'Preparing',done:'Completed',paid:'Paid',itemname:'Product or service name',error:'Something went wrong.'},
-sw:{logout:'Toka',welcome:'Simamia biashara yako kwa urahisi',sub:'Maagizo, nafasi, miadi na wateja sehemu moja.',login:'Ingia',create:'Fungua akaunti',email:'Barua pepe',password:'Nenosiri',business:'Jina la biashara',type:'Aina ya biashara',yourname:'Jina lako',password10:'Nenosiri (herufi 10 au zaidi)',currency:'Sarafu',whatsapp:'WhatsApp',secure:'Kila biashara ina eneo lake la faragha.',dashboard:'Dashibodi',orders:'Maagizo',bookings:'Nafasi na miadi',customers:'Wateja',catalog:'Katalogi',private:'Eneo la faragha',gettingstarted:'Eneo lako liko tayari',intro:'Ongeza maagizo, nafasi, wateja na bidhaa.',addorder:'+ Agizo jipya',addbooking:'+ Ongeza nafasi',addcustomer:'+ Mteja mpya',additem:'+ Ongeza kipengee',customer:'Mteja',detail:'Maelezo',amount:'Kiasi',status:'Hali',date:'Tarehe',name:'Jina',phone:'Simu',category:'Kategoria',price:'Bei',empty:'Bado hakuna taarifa.',save:'Hifadhi',cancel:'Ghairi',description:'Maelezo',datehour:'Tarehe na saa',newstatus:'Jipya',confirmed:'Imethibitishwa',preparing:'Inaandaliwa',done:'Imekamilika',paid:'Imelipwa',itemname:'Jina la bidhaa au huduma',error:'Hitilafu imetokea.'}
-};
-
-let lang=localStorage.getItem('rs_lang')||'fr';
-let token=localStorage.getItem('rs_token')||'';
-let records={orders:[],bookings:[],customers:[],catalog:[]};
-let business=null;
-let branding={};
-
-const $=id=>document.getElementById(id);
-const t=k=>dict[lang][k]||dict.fr[k]||k;
-
-function translate(){
-  document.querySelectorAll('[data-i]').forEach(el=>el.textContent=t(el.dataset.i));
-  document.documentElement.lang=lang;
-  $('lang').value=lang;
+</style></head><body>
+<div class="top"><div class="topinner"><div class="brand">Rapid <span>Services</span></div><div class="topright"><select id="lang"><option value="fr">Français</option><option value="en">English</option><option value="sw">Kiswahili</option></select><span id="userEmail" class="muted useremail"></span><button id="logout" class="soft hidden" data-i="logout">Déconnexion</button></div></div></div>
+<section id="authView" class="wrap"><div class="auth"><h1 data-i="welcome">Gérez votre activité simplement</h1><p class="muted" data-i="sub">Commandes, réservations, rendez-vous et clients au même endroit.</p><div class="row"><button id="loginTab" class="primary" data-i="login">Connexion</button><button id="registerTab" class="soft" data-i="create">Créer un compte</button></div><form id="loginForm"><div class="field"><label data-i="email">E-mail</label><input name="email" type="email" required autocomplete="email"></div><div class="field"><label data-i="password">Mot de passe</label><input name="password" type="password" required autocomplete="current-password"></div><button class="primary" style="width:100%" data-i="login">Connexion</button></form><form id="registerForm" class="hidden"><div class="field"><label data-i="business">Nom de l'établissement</label><input name="businessName" required></div><div class="field"><label data-i="type">Type d'activité</label><select name="businessType"><option value="restaurant">Restaurant</option><option value="hotel">Hôtel</option><option value="service">Centre de services</option><option value="other">Autre</option></select></div><div class="field"><label data-i="yourname">Votre nom</label><input name="name" required></div><div class="field"><label data-i="email">E-mail</label><input name="email" type="email" required></div><div class="field"><label data-i="password10">Mot de passe (10 caractères minimum)</label><input name="password" type="password" minlength="10" required></div><div class="row"><div class="field"><label data-i="currency">Devise</label><select name="currency"><option>USD</option><option>BIF</option><option>EUR</option><option>KES</option><option>TZS</option></select></div><div class="field"><label data-i="whatsapp">WhatsApp</label><input name="whatsapp" placeholder="257..." inputmode="tel"></div></div><button class="primary" style="width:100%" data-i="create">Créer un compte</button></form><p id="authError" class="error"></p><div class="notice" data-i="secure">Chaque établissement possède son espace privé. Les données sont isolées entre les comptes.</div></div></section>
+<section id="appView" class="hidden"><div class="shell"><nav class="side"><button class="active" data-page="dashboard" data-i="dashboard">Tableau de bord</button><button data-page="orders" data-i="orders">Commandes</button><button data-page="bookings" data-i="bookings">Réservations & RDV</button><button data-page="customers" data-i="customers">Clients</button><button data-page="catalog" data-i="catalog">Catalogue</button><button data-page="settings">Personnalisation</button></nav><main class="main"><div class="heading"><div><h1 id="businessTitle">Rapid Services</h1><span class="muted" id="businessType"></span></div><span class="status" data-i="private">Espace privé</span></div>
+<section id="page-dashboard"><div class="cards"><div class="card"><div class="muted" data-i="orders">Commandes</div><div class="num" id="nOrders">0</div></div><div class="card"><div class="muted" data-i="bookings">Réservations & RDV</div><div class="num" id="nBookings">0</div></div><div class="card"><div class="muted" data-i="customers">Clients</div><div class="num" id="nCustomers">0</div></div><div class="card"><div class="muted" data-i="catalog">Catalogue</div><div class="num" id="nCatalog">0</div></div>
+<div class="card"><div class="muted">Chiffre d'affaires</div><div class="num" id="revenueTotal">0</div></div>
+<div class="card"><div class="muted">Montant encaissé</div><div class="num" id="paidTotal">0</div></div>
+<div class="card"><div class="muted">Reste à encaisser</div><div class="num" id="dueTotal">0</div></div></div>
+<div class="toolbar"><button class="soft" onclick="exportReport()">Exporter CSV</button><button class="soft" onclick="printReport()">Imprimer le rapport</button></div><div class="card"><h3 data-i="gettingstarted">Votre espace de gestion est prêt</h3><p class="muted" data-i="intro">Ajoutez vos commandes, réservations, clients et produits. Vous pouvez changer de langue à tout moment.</p></div></section>
+<section id="page-orders" class="hidden"><div class="heading"><h1 data-i="orders">Commandes</h1><button class="primary" onclick="openAdd('orders')" data-i="addorder">+ Nouvelle commande</button></div><div class="tablebox"><table><thead><tr><th data-i="customer">Client</th><th data-i="detail">Détail</th><th data-i="amount">Montant</th><th data-i="status">Statut</th><th>Paiement</th><th>WhatsApp</th><th></th></tr></thead><tbody id="body-orders"></tbody></table></div></section>
+<section id="page-bookings" class="hidden"><div class="heading"><h1 data-i="bookings">Réservations & RDV</h1><button class="primary" onclick="openAdd('bookings')" data-i="addbooking">+ Ajouter</button></div><div class="tablebox"><table><thead><tr><th data-i="customer">Client</th><th data-i="detail">Détail</th><th data-i="date">Date</th><th data-i="status">Statut</th><th>Paiement</th><th>WhatsApp</th><th></th></tr></thead><tbody id="body-bookings"></tbody></table></div></section>
+<section id="page-customers" class="hidden"><div class="heading"><h1 data-i="customers">Clients</h1><button class="primary" onclick="openAdd('customers')" data-i="addcustomer">+ Nouveau client</button></div><div class="tablebox"><table><thead><tr><th data-i="name">Nom</th><th data-i="phone">Téléphone</th><th>E-mail</th><th></th></tr></thead><tbody id="body-customers"></tbody></table></div></section>
+<section id="page-catalog" class="hidden"><div class="heading"><h1 data-i="catalog">Catalogue</h1><button class="primary" onclick="openAdd('catalog')" data-i="additem">+ Ajouter un élément</button></div><div class="tablebox"><table><thead><tr><th data-i="name">Nom</th><th data-i="category">Catégorie</th><th data-i="price">Prix</th><th></th></tr></thead><tbody id="body-catalog"></tbody></table></div></section>
+<section id="page-settings" class="hidden"><div class="heading"><h1>Personnalisation de l'établissement</h1><button class="primary" onclick="saveBranding()">Enregistrer</button></div><div class="card"><p class="muted">Ajoutez votre identité visuelle. Ces informations apparaîtront sur les factures PDF.</p><div class="row"><div class="field"><label>Nom commercial</label><input id="brandName" maxlength="100"></div><div class="field"><label>Téléphone / WhatsApp</label><input id="brandPhone" maxlength="30"></div></div><div class="row"><div class="field"><label>E-mail professionnel</label><input id="brandEmail" type="email" maxlength="120"></div><div class="field"><label>Adresse</label><input id="brandAddress" maxlength="180"></div></div><div class="field"><label>Message de bas de facture</label><input id="brandFooter" maxlength="180" placeholder="Merci pour votre confiance."></div><div class="row"><div class="field"><label>Couleur principale</label><input id="brandColor" type="color" value="#2368e8"></div><div class="field"><label>Couleur secondaire</label><input id="brandDark" type="color" value="#102b46"></div></div><div class="field"><label>Logo (PNG ou JPG, 1 Mo maximum)</label><input id="brandLogoFile" type="file" accept="image/png,image/jpeg"><div id="logoPreview"></div><button type="button" class="soft" onclick="removeBrandLogo()">Retirer le logo</button></div><div class="notice">Les paramètres sont enregistrés dans votre espace entreprise.</div><p id="brandSaved" class="status hidden">Personnalisation enregistrée.</p></div></section><div class="notice" data-i="whatsnotice">Le bouton WhatsApp ouvre une conversation. Les messages ne sont pas envoyés automatiquement par cette version.</div></main></div></section>
+<div id="modal" class="modal"><div class="modalbox"><div class="heading"><h3 id="modalTitle">Ajouter</h3><button class="soft" onclick="closeModal()">✕</button></div><form id="recordForm"></form></div></div><script>
+const dict={fr:{logout:'Déconnexion',welcome:'Gérez votre activité simplement',sub:'Commandes, réservations, rendez-vous et clients au même endroit.',login:'Connexion',create:'Créer un compte',email:'E-mail',password:'Mot de passe',business:'Nom de l’établissement',type:'Type d’activité',yourname:'Votre nom',password10:'Mot de passe (10 caractères minimum)',currency:'Devise',whatsapp:'WhatsApp',secure:'Chaque établissement possède son espace privé. Les données sont isolées entre les comptes.',dashboard:'Tableau de bord',orders:'Commandes',bookings:'Réservations & RDV',customers:'Clients',catalog:'Catalogue',private:'Espace privé',gettingstarted:'Votre espace de gestion est prêt',intro:'Ajoutez vos commandes, réservations, clients et produits. Vous pouvez changer de langue à tout moment.',addorder:'+ Nouvelle commande',addbooking:'+ Ajouter',addcustomer:'+ Nouveau client',additem:'+ Ajouter un élément',customer:'Client',detail:'Détail',amount:'Montant',status:'Statut',date:'Date',name:'Nom',phone:'Téléphone',category:'Catégorie',price:'Prix',whatsnotice:'Le bouton WhatsApp ouvre une conversation. Les messages ne sont pas envoyés automatiquement par cette version.',empty:'Aucune donnée pour le moment.',save:'Enregistrer',cancel:'Annuler',description:'Description / détail',datehour:'Date et heure',newstatus:'Nouveau',confirmed:'Confirmé',preparing:'En préparation',done:'Terminé',paid:'Payé',itemname:'Nom du produit ou service',error:'Une erreur est survenue.'},en:{logout:'Log out',welcome:'Manage your business simply',sub:'Orders, bookings, appointments and customers in one place.',login:'Log in',create:'Create account',email:'Email',password:'Password',business:'Business name',type:'Business type',yourname:'Your name',password10:'Password (at least 10 characters)',currency:'Currency',whatsapp:'WhatsApp',secure:'Each business has a private workspace. Data is isolated between accounts.',dashboard:'Dashboard',orders:'Orders',bookings:'Bookings & appointments',customers:'Customers',catalog:'Catalog',private:'Private workspace',gettingstarted:'Your management workspace is ready',intro:'Add orders, bookings, customers and products. You can change language anytime.',addorder:'+ New order',addbooking:'+ Add booking',addcustomer:'+ New customer',additem:'+ Add item',customer:'Customer',detail:'Details',amount:'Amount',status:'Status',date:'Date',name:'Name',phone:'Phone',category:'Category',price:'Price',whatsnotice:'WhatsApp opens a conversation. Messages are not sent automatically in this version.',empty:'No records yet.',save:'Save',cancel:'Cancel',description:'Description / details',datehour:'Date and time',newstatus:'New',confirmed:'Confirmed',preparing:'Preparing',done:'Completed',paid:'Paid',itemname:'Product or service name',error:'Something went wrong.'},sw:{logout:'Toka',welcome:'Simamia biashara yako kwa urahisi',sub:'Maagizo, nafasi, miadi na wateja sehemu moja.',login:'Ingia',create:'Fungua akaunti',email:'Barua pepe',password:'Nenosiri',business:'Jina la biashara',type:'Aina ya biashara',yourname:'Jina lako',password10:'Nenosiri (herufi 10 au zaidi)',currency:'Sarafu',whatsapp:'WhatsApp',secure:'Kila biashara ina eneo lake la faragha. Data zimetenganishwa kati ya akaunti.',dashboard:'Dashibodi',orders:'Maagizo',bookings:'Nafasi na miadi',customers:'Wateja',catalog:'Katalogi',private:'Eneo la faragha',gettingstarted:'Eneo lako la usimamizi liko tayari',intro:'Ongeza maagizo, nafasi, wateja na bidhaa. Unaweza kubadilisha lugha wakati wowote.',addorder:'+ Agizo jipya',addbooking:'+ Ongeza nafasi',addcustomer:'+ Mteja mpya',additem:'+ Ongeza kipengee',customer:'Mteja',detail:'Maelezo',amount:'Kiasi',status:'Hali',date:'Tarehe',name:'Jina',phone:'Simu',category:'Kategoria',price:'Bei',whatsnotice:'WhatsApp itafungua mazungumzo. Ujumbe hautumwi moja kwa moja katika toleo hili.',empty:'Bado hakuna taarifa.',save:'Hifadhi',cancel:'Ghairi',description:'Maelezo',datehour:'Tarehe na saa',newstatus:'Jipya',confirmed:'Imethibitishwa',preparing:'Inaandaliwa',done:'Imekamilika',paid:'Imelipwa',itemname:'Jina la bidhaa au huduma',error:'Hitilafu imetokea.'}};
+let lang=localStorage.getItem('rs_lang')||'fr',token=localStorage.getItem('rs_token')||'',records={orders:[],bookings:[],customers:[],catalog:[]},business=null,branding={};
+const $=id=>document.getElementById(id),t=k=>dict[lang][k]||dict.fr[k]||k;
+function translate(){document.querySelectorAll('[data-i]').forEach(el=>el.textContent=t(el.dataset.i));document.documentElement.lang=lang;$('lang').value=lang;}
+$('lang').value=lang;$('lang').onchange=e=>{lang=e.target.value;localStorage.setItem('rs_lang',lang);translate();};translate();
+function showAuthError(s){$('authError').textContent=s||''}
+$('loginTab').onclick=()=>{$('loginForm').classList.remove('hidden');$('registerForm').classList.add('hidden');$('loginTab').className='primary';$('registerTab').className='soft';showAuthError('')};$('registerTab').onclick=()=>{$('registerForm').classList.remove('hidden');$('loginForm').classList.add('hidden');$('registerTab').className='primary';$('loginTab').className='soft';showAuthError('')};
+async function api(url,opts={}){const r=await fetch(url,{...opts,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{}),...(opts.headers||{})}});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||t('error'));return d}
+$('loginForm').onsubmit=async e=>{e.preventDefault();showAuthError('');try{const f=Object.fromEntries(new FormData(e.target));const d=await api('/api/auth/login',{method:'POST',body:JSON.stringify(f)});setSession(d)}catch(err){showAuthError(err.message)}};
+$('registerForm').onsubmit=async e=>{e.preventDefault();showAuthError('');try{const f=Object.fromEntries(new FormData(e.target));const d=await api('/api/auth/register',{method:'POST',body:JSON.stringify(f)});setSession(d)}catch(err){showAuthError(err.message)}};
+function setSession(d){
+ // Vérifier les données AVANT de masquer le formulaire de connexion.
+ if(!d || !d.token || !d.user || !d.business){
+  showAuthError('Connexion impossible : le serveur n’a pas renvoyé toutes les informations du compte. Vérifiez les logs Render.');
+  return;
+ }
+ token=d.token;
+ business=d.business;
+ localStorage.setItem('rs_token',token);
+ $('userEmail').textContent=d.user.email||'';
+ $('businessTitle').textContent=business.name||'Rapid Services';
+ $('businessType').textContent=(business.type||'')+(business.currency?' · '+business.currency:'');
+ $('authView').classList.add('hidden');
+ $('appView').classList.remove('hidden');
+ $('logout').classList.remove('hidden');
+ page('dashboard');
+ loadBranding();
+ loadAll();
 }
-$('lang').value=lang;
-$('lang').onchange=e=>{
-  lang=e.target.value;
-  localStorage.setItem('rs_lang',lang);
-  translate();
-};
-translate();
+$('logout').onclick=()=>{token='';localStorage.removeItem('rs_token');$('appView').classList.add('hidden');$('authView').classList.remove('hidden');$('logout').classList.add('hidden');$('userEmail').textContent=''};
 
-function showAuthError(message){$('authError').textContent=message||'';}
-
-$('loginTab').onclick=()=>{
-  $('loginForm').classList.remove('hidden');
-  $('registerForm').classList.add('hidden');
-  $('loginTab').className='primary';
-  $('registerTab').className='soft';
-  showAuthError('');
-};
-$('registerTab').onclick=()=>{
-  $('registerForm').classList.remove('hidden');
-  $('loginForm').classList.add('hidden');
-  $('registerTab').className='primary';
-  $('loginTab').className='soft';
-  showAuthError('');
-};
-
-async function api(url,opts={}){
-  const response=await fetch(url,{
-    ...opts,
-    headers:{
-      'Content-Type':'application/json',
-      ...(token?{Authorization:'Bearer '+token}:{}),
-      ...(opts.headers||{})
-    }
-  });
-  const data=await response.json().catch(()=>({}));
-  if(!response.ok)throw new Error(data.error||t('error'));
-  return data;
-}
-
-$('loginForm').onsubmit=async e=>{
-  e.preventDefault();
-  showAuthError('');
-  try{
-    const form=Object.fromEntries(new FormData(e.target));
-    const data=await api('/api/auth/login',{method:'POST',body:JSON.stringify(form)});
-    await setSession(data);
-  }catch(error){showAuthError(error.message);}
-};
-
-$('registerForm').onsubmit=async e=>{
-  e.preventDefault();
-  showAuthError('');
-  try{
-    const form=Object.fromEntries(new FormData(e.target));
-    const data=await api('/api/auth/register',{method:'POST',body:JSON.stringify(form)});
-    await setSession(data);
-  }catch(error){showAuthError(error.message);}
-};
-
-async function setSession(data){
-  token=data.token;
-  localStorage.setItem('rs_token',token);
-  business=data.business;
-  $('authView').classList.add('hidden');
-  $('appView').classList.remove('hidden');
-  $('logout').classList.remove('hidden');
-  $('userEmail').textContent=data.user.email;
-  $('businessTitle').textContent=data.business.name;
-  $('businessType').textContent=data.business.type+' · '+data.business.currency;
-  await loadBranding();
-  await loadAll();
-}
-
-$('logout').onclick=()=>{
-  token='';
-  business=null;
-  branding={};
-  localStorage.removeItem('rs_token');
-  $('appView').classList.add('hidden');
-  $('authView').classList.remove('hidden');
-  $('logout').classList.add('hidden');
-  $('userEmail').textContent='';
-};
-
-function brandingKey(){
-  return 'rs_brand_'+String(business?.id||business?.name||'default').replace(/[^a-z0-9_-]/gi,'_');
-}
-
-function applyBranding(){
-  const name=branding.name||business?.name||'Rapid Services';
-  $('businessTitle').textContent=name;
-  document.documentElement.style.setProperty('--blue',branding.color||'#2368e8');
-  document.documentElement.style.setProperty('--navy',branding.dark||'#102b46');
-}
-
-function showLogoPreview(){
-  const box=$('logoPreview');
-  if(!box)return;
-  box.replaceChildren();
-  if(branding.logo){
-    const img=document.createElement('img');
-    img.src=branding.logo;
-    img.alt='Logo';
-    img.style.cssText='max-width:150px;max-height:90px;object-fit:contain;border:1px solid #e3eaf2;border-radius:8px;padding:6px';
-    box.appendChild(img);
-  }else{
-    box.textContent='Aucun logo sélectionné';
-  }
-}
-
+function brandingKey(){return 'rs_brand_'+String(business?.id||business?.name||'default').replace(/[^a-z0-9_-]/gi,'_')}
 async function loadBranding(){
-  let cloudBranding={};
-  try{
-    const data=await api('/api/settings');
-    cloudBranding=data.branding||{};
-  }catch(error){
-    console.warn('Paramètres cloud non disponibles:',error.message);
-  }
-
-  let localBranding={};
-  try{
-    localBranding=JSON.parse(localStorage.getItem(brandingKey())||'{}');
-  }catch{
-    localBranding={};
-  }
-
-  branding={...localBranding,...cloudBranding};
-  $('brandName').value=branding.name||business?.name||'';
-  $('brandPhone').value=branding.phone||business?.whatsapp||'';
-  $('brandEmail').value=branding.email||'';
-  $('brandAddress').value=branding.address||'';
-  $('brandFooter').value=branding.footer||'Merci pour votre confiance.';
-  $('brandColor').value=branding.color||'#2368e8';
-  $('brandDark').value=branding.dark||'#102b46';
-  showLogoPreview();
-  applyBranding();
+ try{const cloud=await api('/api/settings');branding=cloud?.branding||JSON.parse(localStorage.getItem(brandingKey())||'{}')}catch(e){try{branding=JSON.parse(localStorage.getItem(brandingKey())||'{}')}catch{branding={}}}
+ $('brandName').value=branding.name||business?.name||'';
+ $('brandPhone').value=branding.phone||business?.whatsapp||'';
+ $('brandEmail').value=branding.email||'';
+ $('brandAddress').value=branding.address||'';
+ $('brandFooter').value=branding.footer||'Merci pour votre confiance.';
+ $('brandColor').value=branding.color||'#2368e8';$('brandDark').value=branding.dark||'#102b46';
+ showLogoPreview();applyBranding();
 }
-
-$('brandLogoFile').addEventListener('change',event=>{
-  const file=event.target.files?.[0];
-  if(!file)return;
-  if(!['image/png','image/jpeg'].includes(file.type)){
-    alert('Choisissez un fichier PNG ou JPG.');
-    event.target.value='';
-    return;
-  }
-  if(file.size>1024*1024){
-    alert('Le logo doit faire 1 Mo maximum.');
-    event.target.value='';
-    return;
-  }
-  const reader=new FileReader();
-  reader.onload=()=>{
-    branding.logo=reader.result;
-    showLogoPreview();
-  };
-  reader.readAsDataURL(file);
+function applyBranding(){
+ const name=branding.name||business?.name||'Rapid Services';
+ $('businessTitle').textContent=name;
+ document.documentElement.style.setProperty('--blue',branding.color||'#2368e8');
+ document.documentElement.style.setProperty('--navy',branding.dark||'#102b46');
+}
+function showLogoPreview(){
+ const box=$('logoPreview');if(!box)return;
+ box.innerHTML=branding.logo?`<img src="${branding.logo}" alt="Logo" style="max-width:150px;max-height:90px;object-fit:contain;border:1px solid #e3eaf2;border-radius:8px;padding:6px">`:'<span class="muted">Aucun logo sélectionné</span>';
+}
+$('brandLogoFile').addEventListener('change',e=>{
+ const file=e.target.files?.[0];if(!file)return;
+ if(!/^image\/(png|jpeg)$/.test(file.type)){alert('Choisissez un fichier PNG ou JPG.');e.target.value='';return;}
+ if(file.size>1024*1024){alert('Le logo doit faire 1 Mo maximum.');e.target.value='';return;}
+ const reader=new FileReader();reader.onload=()=>{branding.logo=reader.result;showLogoPreview()};reader.readAsDataURL(file);
 });
-
-function removeBrandLogo(){
-  branding.logo='';
-  $('brandLogoFile').value='';
-  showLogoPreview();
-}
-
+function removeBrandLogo(){branding.logo='';$('brandLogoFile').value='';showLogoPreview()}
 async function saveBranding(){
-  const button=document.querySelector('#page-settings .primary');
-  const errorBox=$('brandError');
-  errorBox.textContent='';
-  branding={
-    ...branding,
-    name:$('brandName').value.trim(),
-    phone:$('brandPhone').value.trim(),
-    email:$('brandEmail').value.trim(),
-    address:$('brandAddress').value.trim(),
-    footer:$('brandFooter').value.trim(),
-    color:$('brandColor').value,
-    dark:$('brandDark').value
-  };
-
-  try{
-    button.disabled=true;
-    button.textContent='Enregistrement...';
-    const result=await api('/api/settings',{
-      method:'PUT',
-      body:JSON.stringify({branding})
-    });
-    branding=result.branding||branding;
-    localStorage.setItem(brandingKey(),JSON.stringify(branding));
-    applyBranding();
-    showLogoPreview();
-    $('brandSaved').classList.remove('hidden');
-    setTimeout(()=>$('brandSaved').classList.add('hidden'),2500);
-  }catch(error){
-    errorBox.textContent='Échec de la sauvegarde en ligne : '+error.message;
-  }finally{
-    button.disabled=false;
-    button.textContent='Enregistrer la personnalisation';
-  }
+ branding={...branding,name:$('brandName').value.trim(),phone:$('brandPhone').value.trim(),email:$('brandEmail').value.trim(),address:$('brandAddress').value.trim(),footer:$('brandFooter').value.trim(),color:$('brandColor').value,dark:$('brandDark').value};
+ try{localStorage.setItem(brandingKey(),JSON.stringify(branding));await api('/api/settings',{method:'PUT',body:JSON.stringify({branding})});applyBranding();$('brandSaved').classList.remove('hidden');setTimeout(()=>$('brandSaved').classList.add('hidden'),2500)}
+ catch(e){alert('Enregistrement impossible. Le logo est peut-être trop volumineux.')}
 }
+function page(p){document.querySelectorAll('[id^="page-"]').forEach(x=>x.classList.add('hidden'));$('page-'+p).classList.remove('hidden');document.querySelectorAll('.side button').forEach(b=>b.classList.toggle('active',b.dataset.page===p))}document.querySelectorAll('.side button').forEach(b=>b.onclick=()=>page(b.dataset.page));
+async function loadAll() {
+    try {
+        const kinds = ['orders', 'bookings', 'customers', 'catalog'];
 
-function page(pageName){
-  document.querySelectorAll('[id^="page-"]').forEach(section=>section.classList.add('hidden'));
-  $('page-'+pageName).classList.remove('hidden');
-  document.querySelectorAll('.side button').forEach(button=>{
-    button.classList.toggle('active',button.dataset.page===pageName);
-  });
-}
-document.querySelectorAll('.side button').forEach(button=>{
-  button.onclick=()=>page(button.dataset.page);
-});
+        for (const kind of kinds) {
+            const data = await api('/api/records/' + kind);
+            records[kind] = Array.isArray(data) ? data : [];
+        }
 
-async function loadAll(){
-  try{
-    for(const kind of Object.keys(records)){
-      records[kind]=await api('/api/records/'+kind);
+        renderAll();
+    } catch (e) {
+        console.error('Erreur de chargement :', e);
+        if (e.message && e.message.includes('Session')) {
+            $('logout').click();
+        } else {
+            alert('Chargement impossible : ' + e.message);
+        }
     }
-    renderAll();
-  }catch(error){
-    if(error.message.toLowerCase().includes('session'))$('logout').click();
-    else alert(error.message);
-  }
 }
-
 function renderAll(){
-  let revenue=0,paid=0;
-  for(const record of records.orders){
-    const amount=Number(record.amount||0);
-    revenue+=amount;
-    paid+=Math.min(amount,Math.max(0,Number(record.paidAmount||0)));
+ let revenue=0,paid=0;
+ for(const r of records.orders){const amount=Number(r.amount||0);revenue+=amount;paid+=Math.min(amount,Math.max(0,Number(r.paidAmount||0)));}
+ for(const k of Object.keys(records)){
+  const body=$('body-'+k);if(!body)continue;body.innerHTML='';
+  if(!records[k].length){body.innerHTML=`<tr><td colspan="8" class="empty">${t('empty')}</td></tr>`;continue}
+  for(const r of records[k]){
+   const tr=document.createElement('tr');let cells='';
+   if(k==='orders')cells=`<td>${esc(r.customer||'')}</td><td>${esc(r.detail||'')}</td><td>${esc(r.amount||'')}</td><td>${esc(r.status||'')}</td><td>${esc(r.paymentMethod||'—')} · ${esc(r.paymentStatus||'Non payé')}<br><small>Payé: ${esc(r.paidAmount||0)} / Reste: ${Math.max(0,Number(r.amount||0)-Number(r.paidAmount||0))}</small></td><td>${wa(r.phone)}</td>`;
+   if(k==='bookings')cells=`<td>${esc(r.customer||'')}</td><td>${esc(r.detail||'')}</td><td>${esc(r.date||'')}</td><td>${esc(r.status||'')}</td><td>${wa(r.phone)}</td>`;
+   if(k==='customers')cells=`<td>${esc(r.name||'')}</td><td>${esc(r.phone||'')}</td><td>${esc(r.email||'')}</td>`;
+   if(k==='catalog')cells=`<td>${esc(r.name||'')}</td><td>${esc(r.category||'')}</td><td>${esc(r.price||'')}</td>`;
+   const invoiceBtns = k==='orders' ? `<br><button class="soft" onclick="makeInvoice(${r.id})">Facture PDF</button> <button class="soft" onclick="sendInvoiceWhatsApp(${r.id})">Envoyer WhatsApp</button>` : '';
+   tr.innerHTML=cells+`<td>${invoiceBtns}<br><button class="soft" onclick="editRecord('${k}',${r.id})">Modifier</button> <button class="danger" onclick="removeRecord('${k}',${r.id})">×</button></td>`;
+   body.appendChild(tr);
   }
-
-  for(const kind of Object.keys(records)){
-    const body=$('body-'+kind);
-    if(!body)continue;
-    body.replaceChildren();
-
-    if(!records[kind].length){
-      const row=document.createElement('tr');
-      row.innerHTML=`<td colspan="8" class="empty">${t('empty')}</td>`;
-      body.appendChild(row);
-      continue;
-    }
-
-    for(const record of records[kind]){
-      const row=document.createElement('tr');
-      let cells='';
-
-      if(kind==='orders'){
-        cells=`<td>${esc(record.customer||'')}</td>
-          <td>${esc(record.detail||'')}</td>
-          <td>${esc(record.amount||'')}</td>
-          <td>${esc(record.status||'')}</td>
-          <td>${esc(record.paymentMethod||'—')} · ${esc(record.paymentStatus||'Non payé')}<br>
-          <small>Payé: ${esc(record.paidAmount||0)} / Reste: ${Math.max(0,Number(record.amount||0)-Number(record.paidAmount||0))}</small></td>
-          <td>${wa(record.phone)}</td>`;
-      }
-      if(kind==='bookings'){
-        cells=`<td>${esc(record.customer||'')}</td><td>${esc(record.detail||'')}</td>
-          <td>${esc(record.date||'')}</td><td>${esc(record.status||'')}</td><td>${wa(record.phone)}</td>`;
-      }
-      if(kind==='customers'){
-        cells=`<td>${esc(record.name||'')}</td><td>${esc(record.phone||'')}</td><td>${esc(record.email||'')}</td>`;
-      }
-      if(kind==='catalog'){
-        cells=`<td>${esc(record.name||'')}</td><td>${esc(record.category||'')}</td><td>${esc(record.price||'')}</td>`;
-      }
-
-      const invoiceButtons=kind==='orders'
-        ?`<br><button class="soft" onclick="makeInvoice(${Number(record.id)})">Facture PDF</button>
-          <button class="soft" onclick="sendInvoiceWhatsApp(${Number(record.id)})">WhatsApp</button>`
-        :'';
-
-      row.innerHTML=cells+`<td>${invoiceButtons}<br>
-        <button class="soft" onclick="editRecord('${kind}',${Number(record.id)})">Modifier</button>
-        <button class="danger" onclick="removeRecord('${kind}',${Number(record.id)})">×</button></td>`;
-      body.appendChild(row);
-    }
-  }
-
-  $('nOrders').textContent=records.orders.length;
-  $('nBookings').textContent=records.bookings.length;
-  $('nCustomers').textContent=records.customers.length;
-  $('nCatalog').textContent=records.catalog.length;
-
-  const currency=business?.currency||'USD';
-  const format=number=>new Intl.NumberFormat(undefined,{maximumFractionDigits:2}).format(number)+' '+currency;
-  $('revenueTotal').textContent=format(revenue);
-  $('paidTotal').textContent=format(paid);
-  $('dueTotal').textContent=format(Math.max(0,revenue-paid));
+ }
+ $('nOrders').textContent=records.orders.length;$('nBookings').textContent=records.bookings.length;$('nCustomers').textContent=records.customers.length;$('nCatalog').textContent=records.catalog.length;
+ const currency=business?.currency||'USD';const fmt=n=>new Intl.NumberFormat(undefined,{maximumFractionDigits:2}).format(n)+' '+currency;
+ $('revenueTotal').textContent=fmt(revenue);$('paidTotal').textContent=fmt(paid);$('dueTotal').textContent=fmt(Math.max(0,revenue-paid));
+}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function wa(phone){if(!phone)return '—';const n=String(phone).replace(/[^0-9]/g,'');return `<a href="https://wa.me/${n}" target="_blank" rel="noopener">WhatsApp</a>`}
+function openAdd(kind){buildRecordForm(kind,null)}
+function editRecord(kind,id){const record=records[kind].find(x=>Number(x.id)===Number(id));if(record)buildRecordForm(kind,record)}
+function buildRecordForm(kind,record){
+ const form=$('recordForm'),editing=!!record;const val=k=>record?.[k]??'';
+ $('modalTitle').textContent=(editing?'Modifier : ':'Ajouter : ')+(kind==='orders'?t('orders'):kind==='bookings'?t('bookings'):kind==='customers'?t('customers'):t('catalog'));
+ const field=(label,name,type='text',required=true)=>`<div class="field"><label>${label}</label><input name="${name}" type="${type}" value="${esc(val(name))}" ${required?'required':''}></div>`;
+ const select=(label,name,opts)=>`<div class="field"><label>${label}</label><select name="${name}">${opts.map(o=>`<option value="${esc(o)}" ${val(name)===o?'selected':''}>${esc(o)}</option>`).join('')}</select></div>`;
+ let fields='';
+ if(kind==='orders')fields=field(t('customer'),'customer')+field(t('phone'),'phone')+field(t('description'),'detail')+field(t('amount'),'amount','number')+select(t('status'),'status',[t('newstatus'),t('confirmed'),t('preparing'),t('done')])+field('Montant payé','paidAmount','number',false)+select('Mode de paiement','paymentMethod',['Espèces','Mobile Money','Carte bancaire','Virement','Autre'])+select('État du paiement','paymentStatus',['Non payé','Partiellement payé','Payé']);
+ if(kind==='bookings')fields=field(t('customer'),'customer')+field(t('phone'),'phone')+field(t('description'),'detail')+field(t('datehour'),'date','datetime-local')+select(t('status'),'status',[t('newstatus'),t('confirmed'),t('done')]);
+ if(kind==='customers')fields=field(t('name'),'name')+field(t('phone'),'phone')+field(t('email'),'email','email',false);
+ if(kind==='catalog')fields=field(t('itemname'),'name')+field(t('category'),'category')+field(t('price'),'price','number');
+ form.innerHTML=fields+`<div class="actions"><button type="button" class="soft" onclick="closeModal()">${t('cancel')}</button><button class="primary">${t('save')}</button></div>`;
+ form.onsubmit=async e=>{e.preventDefault();try{const payload=Object.fromEntries(new FormData(form));if(kind==='orders'){payload.amount=Number(payload.amount||0);payload.paidAmount=Number(payload.paidAmount||0);payload.paymentStatus=payload.paidAmount>=payload.amount&&payload.amount>0?'Payé':payload.paidAmount>0?'Partiellement payé':'Non payé';}await api('/api/records/'+kind+(editing?'/'+record.id:''),{method:editing?'PUT':'POST',body:JSON.stringify(payload)});closeModal();await loadAll()}catch(err){alert(err.message)}};
+ $('modal').classList.add('show');
 }
 
-function esc(value){
-  return String(value).replace(/[&<>"']/g,char=>({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-  }[char]));
+function invoiceData(id){
+ const order=records.orders.find(x=>Number(x.id)===Number(id));
+ if(!order) throw new Error('Commande introuvable.');
+ const currency=business?.currency||'USD';
+ const amount=Number(order.amount||0), paid=Number(order.paidAmount||0);
+ const date=order.createdAt ? new Date(order.createdAt) : new Date();
+ const invoiceNo='RS-'+String(order.id).padStart(5,'0');
+ return {order,currency,amount,paid,due:Math.max(0,amount-paid),date,invoiceNo};
 }
- function wa(phone){
-  return 'https://wa.me/' + String(phone || '').replace(/\D/g,'');
+function invoiceDocument(d){
+ const bname=esc(branding.name||business?.name||'Rapid Services');
+ const bphone=esc(branding.phone||business?.whatsapp||'');const bemail=esc(branding.email||'');const baddress=esc(branding.address||'');const bfooter=esc(branding.footer||'Merci pour votre confiance.');const logo=branding.logo||'';const mainColor=branding.color||'#2368e8';const darkColor=branding.dark||'#102b46';
+ const customer=esc(d.order.customer||'Client');
+ const detail=esc(d.order.detail||'Prestation / commande');
+ const phone=esc(d.order.phone||'');
+ const fmt=n=>new Intl.NumberFormat(undefined,{maximumFractionDigits:2}).format(n)+' '+esc(d.currency);
+ return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Facture ${d.invoiceNo}</title><style>
+ body{font:15px Arial,sans-serif;color:#203044;margin:0;padding:35px;background:#f3f6fb}.invoice{max-width:780px;margin:auto;background:white;padding:42px;border:1px solid #dce4ed}.head{display:flex;justify-content:space-between;gap:20px;border-bottom:3px solid ${mainColor};padding-bottom:20px}.brand{font-size:26px;font-weight:bold;color:${darkColor}}.muted{color:#68798c}.meta{margin:25px 0;display:flex;justify-content:space-between;gap:15px}.box{background:#f5f8fc;padding:15px;border-radius:8px}table{width:100%;border-collapse:collapse;margin:25px 0}th,td{text-align:left;padding:13px;border-bottom:1px solid #dce4ed}th{background:#f5f8fc}.totals{margin-left:auto;width:min(330px,100%)}.totals div{display:flex;justify-content:space-between;padding:7px}.grand{font-size:20px;font-weight:bold;border-top:2px solid #102b46;margin-top:8px;padding-top:12px!important}.footer{margin-top:45px;border-top:1px solid #dce4ed;padding-top:15px;color:#68798c;font-size:12px}.controls{max-width:780px;margin:15px auto;display:flex;gap:10px;flex-wrap:wrap}.controls button{padding:12px 16px;border:0;border-radius:8px;background:${mainColor};color:white;font-weight:bold}@media print{body{background:white;padding:0}.invoice{border:0;padding:15mm}.controls{display:none}}</style></head><body>
+ <div class="controls"><button onclick="window.print()">Télécharger / enregistrer en PDF</button><button onclick="window.close()">Fermer</button></div>
+ <article class="invoice"><div class="head"><div><div class="brand">${logo?`<img src="${logo}" style="max-width:125px;max-height:65px;object-fit:contain;display:block;margin-bottom:8px">`:""}${bname}</div><div class="muted">Facture client</div></div><div><strong>FACTURE</strong><br>${d.invoiceNo}<br><span class="muted">${d.date.toLocaleDateString()}</span></div></div>
+ <div class="meta"><div class="box"><strong>Facturé à</strong><br>${customer}<br>${phone}</div><div class="box"><strong>Établissement</strong><br>${bname}<br>${bphone}<br>${bemail}<br>${baddress}</div></div>
+ <table><thead><tr><th>Description</th><th>Montant</th></tr></thead><tbody><tr><td>${detail}</td><td>${fmt(d.amount)}</td></tr></tbody></table>
+ <div class="totals"><div><span>Total</span><strong>${fmt(d.amount)}</strong></div><div><span>Déjà payé</span><strong>${fmt(d.paid)}</strong></div><div class="grand"><span>Reste à payer</span><span>${fmt(d.due)}</span></div></div>
+ <div class="footer">${bfooter} · Facture générée avec Rapid Services. Numéro : ${d.invoiceNo}.</div></article></body></html>`;
 }
-
-function openAdd(kind){
-  editing = null;
-  currentKind = kind;
-  buildRecordForm(kind, {});
-  document.getElementById('modal').classList.add('show');
+function makeInvoice(id){
+ try{const d=invoiceData(id);const w=window.open('','_blank');if(!w){alert('Autorisez les fenêtres pop-up pour générer la facture.');return;}w.document.open();w.document.write(invoiceDocument(d));w.document.close();}catch(e){alert(e.message)}
 }
-
-function editRecord(kind,id){
-  const item = (records[kind] || []).find(r => String(r.id) === String(id));
-  if(!item) return;
-
-  editing = item;
-  currentKind = kind;
-  buildRecordForm(kind,item);
-  document.getElementById('modal').classList.add('show');
-}
-
-function buildRecordForm(kind,item){
-  const labels = {
-    orders: {
-      title:'Nouvelle commande',
-      fields:[
-        ['customer','Client','text'],
-        ['phone','Téléphone','tel'],
-        ['description','Description','text'],
-        ['amount','Montant','number'],
-        ['status','Statut','select'],
-        ['paid','Montant payé','number']
-      ]
-    },
-    bookings: {
-      title:'Nouvelle réservation',
-      fields:[
-        ['customer','Nom du client','text'],
-        ['phone','Téléphone','tel'],
-        ['date','Date','date'],
-        ['time','Heure','time'],
-        ['description','Description','text'],
-        ['status','Statut','select']
-      ]
-    },
-    customers: {
-      title:'Nouveau client',
-      fields:[
-        ['name','Nom complet','text'],
-        ['phone','Téléphone','tel'],
-        ['email','Email','email'],
-        ['address','Adresse','text']
-      ]
-    },
-    catalog: {
-      title:'Nouvel article ou service',
-      fields:[
-        ['name','Nom','text'],
-        ['description','Description','text'],
-        ['price','Prix','number']
-      ]
-    }
-  };
-
-  const config = labels[kind];
-  if(!config) return;
-
-  document.getElementById('modalTitle').textContent =
-    editing ? 'Modifier' : config.title;
-
-  const form = document.getElementById('recordForm');
-
-  form.innerHTML = config.fields.map(field => {
-    const [name,label,type] = field;
-    const value = item[name] ?? '';
-
-    if(type === 'select'){
-      return `
-        <label>${label}</label>
-        <select name="${name}">
-          <option value="pending" ${value === 'pending' ? 'selected' : ''}>En attente</option>
-          <option value="confirmed" ${value === 'confirmed' ? 'selected' : ''}>Confirmé</option>
-          <option value="completed" ${value === 'completed' ? 'selected' : ''}>Terminé</option>
-          <option value="cancelled" ${value === 'cancelled' ? 'selected' : ''}>Annulé</option>
-        </select>
-      `;
-    }
-
-    return `
-      <label>${label}</label>
-      <input
-        name="${name}"
-        type="${type}"
-        value="${esc(value)}"
-        ${type === 'number' ? 'min="0" step="0.01"' : ''}
-      >
-    `;
-  }).join('') + `
-    <button type="submit" class="btn-primary">
-      ${editing ? 'Enregistrer les modifications' : 'Ajouter'}
-    </button>
-  `;
-
-  form.onsubmit = async function(e){
-    e.preventDefault();
-
-    const data = Object.fromEntries(new FormData(form).entries());
-
-    if(data.amount !== undefined) data.amount = Number(data.amount);
-    if(data.paid !== undefined) data.paid = Number(data.paid);
-    if(data.price !== undefined) data.price = Number(data.price);
-
-    try{
-      if(editing){
-        await api(`/api/records/${kind}/${editing.id}`,{
-          method:'PUT',
-          body:JSON.stringify(data)
-        });
-      }else{
-        await api(`/api/records/${kind}`,{
-          method:'POST',
-          body:JSON.stringify(data)
-        });
-      }
-
-      closeModal();
-      await loadAll();
-      alert('Enregistrement effectué avec succès.');
-    }catch(error){
-      alert(error.message || 'Une erreur est survenue.');
-    }
-  };
+function sendInvoiceWhatsApp(id){
+ try{
+  const d=invoiceData(id),phone=String(d.order.phone||'').replace(/[^0-9]/g,'');
+  if(!phone){alert('Ajoutez le numéro WhatsApp du client dans la commande, puis réessayez.');return;}
+  const fmt=n=>new Intl.NumberFormat(undefined,{maximumFractionDigits:2}).format(n)+' '+d.currency;
+  const message=`Bonjour ${d.order.customer||''}, voici les informations de votre facture ${d.invoiceNo} de ${business?.name||'Rapid Services'}.\nMontant total : ${fmt(d.amount)}\nDéjà payé : ${fmt(d.paid)}\nReste à payer : ${fmt(d.due)}\nMerci pour votre confiance.`;
+  const url='https://wa.me/'+phone+'?text='+encodeURIComponent(message);
+  window.open(url,'_blank','noopener');
+  alert('WhatsApp va s’ouvrir avec le message préparé. Pour joindre le PDF, générez d’abord la facture avec « Facture PDF », enregistrez-la, puis ajoutez le fichier dans la conversation WhatsApp.');
+ }catch(e){alert(e.message)}
 }
 
-function closeModal(){
-  document.getElementById('modal').classList.remove('show');
-}
-
-async function removeRecord(kind,id){
-  if(!confirm('Voulez-vous vraiment supprimer cet élément ?')) return;
-
-  try{
-    await api(`/api/records/${kind}/${id}`,{
-      method:'DELETE'
-    });
-
-    await loadAll();
-    alert('Élément supprimé.');
-  }catch(error){
-    alert(error.message || 'Impossible de supprimer cet élément.');
-  }
-}
-
-function makeInvoice(order){
-  const settings = branding || {};
-  const company = settings.companyName || 'Rapid Services';
-  const phone = settings.phone || '';
-  const address = settings.address || '';
-
-  const amount = Number(order.amount || 0);
-  const paid = Number(order.paid || 0);
-  const due = amount - paid;
-
-  const invoiceWindow = window.open('','_blank');
-
-  if(!invoiceWindow){
-    alert('Autorisez les fenêtres pop-up pour imprimer la facture.');
-    return;
-  }
-
-  invoiceWindow.document.write(`
-    <!doctype html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <title>Facture</title>
-      <style>
-        body{font-family:Arial,sans-serif;padding:35px;color:#222}
-        h1{margin-bottom:5px}
-        .line{border-bottom:1px solid #ddd;padding:12px 0}
-        .total{font-size:20px;font-weight:bold;margin-top:20px}
-        button{padding:10px 20px;margin-top:25px}
-        @media print{button{display:none}}
-      </style>
-    </head>
-    <body>
-      <h1>${esc(company)}</h1>
-      <p>${esc(address)}<br>${esc(phone)}</p>
-      <hr>
-      <h2>FACTURE</h2>
-      <p>Date : ${new Date().toLocaleDateString()}</p>
-      <p>Client : ${esc(order.customer || '')}</p>
-      <p>Téléphone : ${esc(order.phone || '')}</p>
-      <div class="line">Description : ${esc(order.description || '')}</div>
-      <div class="line">Montant total : ${amount.toLocaleString()}</div>
-      <div class="line">Montant payé : ${paid.toLocaleString()}</div>
-      <div class="total">Reste à payer : ${due.toLocaleString()}</div>
-      <p>${esc(settings.footer || 'Merci pour votre confiance.')}</p>
-      <button onclick="window.print()">Imprimer / Enregistrer en PDF</button>
-    </body>
-    </html>
-  `);
-
-  invoiceWindow.document.close();
-}
-
-function sendInvoiceWhatsApp(order){
-  if(!order.phone){
-    alert('Ce client ne possède pas de numéro de téléphone.');
-    return;
-  }
-
-  const amount = Number(order.amount || 0);
-  const paid = Number(order.paid || 0);
-  const due = amount - paid;
-
-  const message =
-    `Bonjour ${order.customer || ''}, voici le résumé de votre commande :\n` +
-    `Description : ${order.description || ''}\n` +
-    `Montant total : ${amount}\n` +
-    `Montant payé : ${paid}\n` +
-    `Reste à payer : ${due}\n\n` +
-    `Merci pour votre confiance.`;
-
-  window.open(
-    wa(order.phone) + '?text=' + encodeURIComponent(message),
-    '_blank'
-  );
-}
-
-function exportReport(){
-  const all = [];
-
-  Object.keys(records).forEach(kind => {
-    (records[kind] || []).forEach(item => {
-      all.push({
-        categorie:kind,
-        client:item.customer || item.name || '',
-        telephone:item.phone || '',
-        description:item.description || '',
-        montant:item.amount || item.price || '',
-        paye:item.paid || '',
-        statut:item.status || ''
-      });
-    });
-  });
-
-  if(!all.length){
-    alert('Aucune donnée à exporter.');
-    return;
-  }
-
-  const headers = Object.keys(all[0]);
-
-  const csv = [
-    headers.join(';'),
-    ...all.map(row =>
-      headers.map(key =>
-        '"' + String(row[key] ?? '').replace(/"/g,'""') + '"'
-      ).join(';')
-    )
-  ].join('\n');
-
-  const blob = new Blob(['\uFEFF' + csv],{
-    type:'text/csv;charset=utf-8;'
-  });
-
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = 'rapid-services-rapport.csv';
-  link.click();
-
-  URL.revokeObjectURL(link.href);
-}
-
-function printReport(){
-  const content = document.getElementById('app');
-
-  if(!content){
-    window.print();
-    return;
-  }
-
-  window.print();
-}
-
-async function restoreSession(){
-  const savedToken = localStorage.getItem('token');
-
-  if(!savedToken){
-    showAuth();
-    return;
-  }
-
-  try{
-    const result = await api('/api/me');
-
-    currentUser = result.user || result;
-    await loadBranding();
-    showApp();
-    await loadAll();
-  }catch(error){
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    token = '';
-    currentUser = null;
-    showAuth();
-  }
-}
-
-document.getElementById('modal').addEventListener('click',function(e){
-  if(e.target === this) closeModal();
-});
-
-restoreSession();
-</script>
-</body>
-</html>
+function exportReport(){const rows=[['Type','Client/Nom','Détail','Montant','Payé','Mode paiement','Statut','Date']];for(const [kind,list] of Object.entries(records))for(const r of list)rows.push([kind,r.customer||r.name||'',r.detail||r.category||'',r.amount??r.price??'',r.paidAmount??'',r.paymentMethod||'',r.status||r.paymentStatus||'',r.date||r.createdAt||'']);const csv=rows.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\r\n');const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='rapid-services-rapport.csv';a.click();URL.revokeObjectURL(a.href)}
+function printReport(){window.print()}
+function closeModal(){$('modal').classList.remove('show')}async function removeRecord(k,id){if(!confirm('Delete?'))return;try{await api(`/api/records/${k}/${id}`,{method:'DELETE'});await loadAll()}catch(e){alert(e.message)}}
+(async()=>{if(token){try{const d=await api('/api/me');setSession({token,user:d.user,business:d.business})}catch{token='';localStorage.removeItem('rs_token')}}})();
+</script></body></html>
