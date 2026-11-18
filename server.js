@@ -18,24 +18,10 @@ const pool = process.env.DATABASE_URL
   : null;
 
 app.use(express.json({ limit: '2mb' }));
-app.use(express.static(__dirname));
-
-const VALID_KINDS = [
-  'orders',
-  'bookings',
-  'customers',
-  'catalog'
-];
-
-// --------------------------------------------------
-// INITIALISATION DE LA BASE DE DONNÉES
-// --------------------------------------------------
+app.use(express.static(path.join(__dirname, 'public')));
 
 async function initDb() {
-  if (!pool) {
-    console.warn('DATABASE_URL non configuré.');
-    return;
-  }
+  if (!pool) return;
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS businesses (
@@ -49,8 +35,7 @@ async function initDb() {
 
     CREATE TABLE IF NOT EXISTS users (
       id BIGSERIAL PRIMARY KEY,
-      business_id BIGINT NOT NULL
-        REFERENCES businesses(id) ON DELETE CASCADE,
+      business_id BIGINT NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
       name TEXT NOT NULL,
       email TEXT NOT NULL UNIQUE,
       password_hash TEXT NOT NULL,
@@ -60,60 +45,34 @@ async function initDb() {
 
     CREATE TABLE IF NOT EXISTS records (
       id BIGSERIAL PRIMARY KEY,
-      business_id BIGINT NOT NULL
-        REFERENCES businesses(id) ON DELETE CASCADE,
-      kind TEXT NOT NULL
-        CHECK (kind IN ('orders','bookings','customers','catalog')),
+      business_id BIGINT NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+      kind TEXT NOT NULL CHECK (kind IN ('orders','bookings','customers','catalog')),
       data JSONB NOT NULL DEFAULT '{}'::jsonb,
       created_at TIMESTAMPTZ DEFAULT NOW(),
       updated_at TIMESTAMPTZ DEFAULT NOW()
     );
 
     CREATE INDEX IF NOT EXISTS records_business_kind_idx
-    ON records(business_id, kind, created_at DESC);
+      ON records(business_id, kind, created_at DESC);
 
     CREATE TABLE IF NOT EXISTS business_settings (
-      business_id BIGINT PRIMARY KEY
-        REFERENCES businesses(id) ON DELETE CASCADE,
+      business_id BIGINT PRIMARY KEY REFERENCES businesses(id) ON DELETE CASCADE,
       branding JSONB NOT NULL DEFAULT '{}'::jsonb,
       updated_at TIMESTAMPTZ DEFAULT NOW()
     );
   `);
-
-  console.log('Base de données initialisée.');
 }
 
-// --------------------------------------------------
-// AUTHENTIFICATION
-// --------------------------------------------------
-
 function auth(req, res, next) {
-  if (!JWT_SECRET) {
-    return res.status(503).json({
-      error: 'JWT_SECRET non configuré.'
-    });
-  }
-
-  const header = req.headers.authorization || '';
-  const token = header.startsWith('Bearer ')
-    ? header.slice(7)
-    : '';
+  const h = req.headers.authorization || '';
+  const token = h.startsWith('Bearer ') ? h.slice(7) : '';
 
   if (!token) {
-    return res.status(401).json({
-      error: 'Connexion requise.'
-    });
+    return res.status(401).json({ error: 'Connexion requise.' });
   }
 
   try {
     req.user = jwt.verify(token, JWT_SECRET);
-
-    if (!req.user.businessId || !req.user.userId) {
-      return res.status(401).json({
-        error: 'Session invalide. Reconnectez-vous.'
-      });
-    }
-
     next();
   } catch {
     return res.status(401).json({
@@ -125,73 +84,42 @@ function auth(req, res, next) {
 function ownerOnly(req, res, next) {
   if (req.user.role !== 'owner') {
     return res.status(403).json({
-      error: 'Action réservée au propriétaire.'
+      error: 'Réservé au propriétaire.'
     });
   }
 
   next();
 }
 
-function validKind(req, res, next) {
-  if (!VALID_KINDS.includes(req.params.kind)) {
-    return res.status(400).json({
-      error: 'Catégorie invalide.'
-    });
-  }
-
-  next();
+function validKind(kind) {
+  return ['orders', 'bookings', 'customers', 'catalog'].includes(kind);
 }
-
-function validObjectBody(req, res, next) {
-  if (
-    !req.body ||
-    typeof req.body !== 'object' ||
-    Array.isArray(req.body)
-  ) {
-    return res.status(400).json({
-      error: 'Données invalides.'
-    });
-  }
-
-  next();
-}
-
-// --------------------------------------------------
-// SANTÉ DU SERVEUR
-// --------------------------------------------------
 
 app.get('/api/health', async (_req, res) => {
-  let databaseConnected = false;
-
-  if (pool) {
-    try {
-      await pool.query('SELECT 1');
-      databaseConnected = true;
-    } catch {
-      databaseConnected = false;
-    }
-  }
-
   res.json({
     ok: true,
     app: 'Rapid Services',
-    database: databaseConnected,
-    version: '2.1.0'
+    database: !!pool,
+    version: '3.0.0'
   });
 });
 
-// --------------------------------------------------
-// INSCRIPTION
-// --------------------------------------------------
-
 app.post('/api/auth/register', async (req, res) => {
-  if (!pool || !JWT_SECRET) {
-    return res.status(503).json({
-      error: 'Service non configuré.'
-    });
-  }
+  const client = await pool?.connect().catch(() => null);
 
   try {
+    if (!pool) {
+      return res.status(503).json({
+        error: 'Base de données non configurée. Ajoutez DATABASE_URL.'
+      });
+    }
+
+    if (!JWT_SECRET) {
+      return res.status(503).json({
+        error: 'JWT_SECRET non configuré.'
+      });
+    }
+
     const {
       businessName,
       businessType,
@@ -202,27 +130,24 @@ app.post('/api/auth/register', async (req, res) => {
       whatsapp = ''
     } = req.body || {};
 
-    const cleanBusinessName = String(businessName || '').trim();
-    const cleanBusinessType = String(businessType || '').trim();
-    const cleanName = String(name || '').trim();
-    const cleanEmail = String(email || '').toLowerCase().trim();
-
     if (
-      !cleanBusinessName ||
-      !cleanBusinessType ||
-      !cleanName ||
-      !cleanEmail ||
+      !businessName ||
+      !businessType ||
+      !name ||
+      !email ||
       !password ||
-      String(password).length < 10
+      password.length < 10
     ) {
       return res.status(400).json({
         error: 'Remplissez tous les champs. Le mot de passe doit contenir au moins 10 caractères.'
       });
     }
 
+    const normalizedEmail = String(email).toLowerCase().trim();
+
     const exists = await pool.query(
       'SELECT id FROM users WHERE email=$1',
-      [cleanEmail]
+      [normalizedEmail]
     );
 
     if (exists.rowCount) {
@@ -231,564 +156,418 @@ app.post('/api/auth/register', async (req, res) => {
       });
     }
 
-    const client = await pool.connect();
+    await client.query('BEGIN');
 
-    try {
-      await client.query('BEGIN');
+    const b = await client.query(
+      `INSERT INTO businesses(name,type,currency,whatsapp)
+       VALUES($1,$2,$3,$4)
+       RETURNING id,name,type,currency,whatsapp`,
+      [businessName, businessType, currency, whatsapp]
+    );
 
-      const businessResult = await client.query(
-        `INSERT INTO businesses
-          (name, type, currency, whatsapp)
-         VALUES ($1, $2, $3, $4)
-         RETURNING id, name, type, currency, whatsapp`,
-        [
-          cleanBusinessName,
-          cleanBusinessType,
-          String(currency || 'USD').trim(),
-          String(whatsapp || '').trim()
-        ]
-      );
+    const hash = await bcrypt.hash(password, 12);
 
-      const business = businessResult.rows[0];
+    const u = await client.query(
+      `INSERT INTO users(business_id,name,email,password_hash)
+       VALUES($1,$2,$3,$4)
+       RETURNING id,name,email,role`,
+      [b.rows[0].id, name, normalizedEmail, hash]
+    );
 
-      const passwordHash = await bcrypt.hash(
-        String(password),
-        12
-      );
+    await client.query('COMMIT');
 
-      const userResult = await client.query(
-        `INSERT INTO users
-          (business_id, name, email, password_hash)
-         VALUES ($1, $2, $3, $4)
-         RETURNING id, name, email, role`,
-        [
-          business.id,
-          cleanName,
-          cleanEmail,
-          passwordHash
-        ]
-      );
+    const token = jwt.sign(
+      {
+        userId: u.rows[0].id,
+        businessId: b.rows[0].id,
+        role: 'owner'
+      },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
 
-      const user = userResult.rows[0];
+    res.status(201).json({
+      token,
+      user: u.rows[0],
+      business: b.rows[0]
+    });
 
-      await client.query('COMMIT');
-
-      const token = jwt.sign(
-        {
-          userId: user.id,
-          businessId: business.id,
-          role: user.role
-        },
-        JWT_SECRET,
-        { expiresIn: '7d' }
-      );
-
-      return res.status(201).json({
-        token,
-        user,
-        business
-      });
-
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
+  } catch (e) {
+    if (client) {
+      await client.query('ROLLBACK').catch(() => {});
     }
 
-  } catch (error) {
-    console.error('Register error:', error);
+    console.error(e);
 
-    if (error.code === '23505') {
-      return res.status(409).json({
-        error: 'Cette adresse e-mail possède déjà un compte.'
-      });
-    }
-
-    return res.status(500).json({
+    res.status(500).json({
       error: 'Impossible de créer le compte.'
     });
+
+  } finally {
+    client?.release();
   }
 });
 
-// --------------------------------------------------
-// CONNEXION
-// --------------------------------------------------
-
 app.post('/api/auth/login', async (req, res) => {
-  if (!pool || !JWT_SECRET) {
-    return res.status(503).json({
-      error: 'Service non configuré.'
-    });
-  }
-
   try {
-    const { email, password } = req.body || {};
-
-    const cleanEmail = String(email || '')
-      .toLowerCase()
-      .trim();
-
-    if (!cleanEmail || !password) {
-      return res.status(400).json({
-        error: 'Saisissez votre e-mail et votre mot de passe.'
+    if (!pool || !JWT_SECRET) {
+      return res.status(503).json({
+        error: 'Service non configuré.'
       });
     }
 
-    const result = await pool.query(
+    const { email, password } = req.body || {};
+
+    const q = await pool.query(
       `SELECT
         u.id,
         u.name,
         u.email,
         u.password_hash,
         u.role,
-        b.id AS business_id,
-        b.name AS business_name,
+        b.id business_id,
+        b.name business_name,
         b.type,
         b.currency,
         b.whatsapp
        FROM users u
-       JOIN businesses b ON b.id = u.business_id
-       WHERE u.email = $1`,
-      [cleanEmail]
+       JOIN businesses b ON b.id=u.business_id
+       WHERE u.email=$1`,
+      [String(email || '').toLowerCase().trim()]
     );
 
     if (
-      !result.rowCount ||
-      !await bcrypt.compare(
-        String(password),
-        result.rows[0].password_hash
-      )
+      !q.rowCount ||
+      !await bcrypt.compare(password || '', q.rows[0].password_hash)
     ) {
       return res.status(401).json({
         error: 'E-mail ou mot de passe incorrect.'
       });
     }
 
-    const row = result.rows[0];
+    const r = q.rows[0];
 
     const token = jwt.sign(
       {
-        userId: row.id,
-        businessId: row.business_id,
-        role: row.role
+        userId: r.id,
+        businessId: r.business_id,
+        role: r.role
       },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
 
-    return res.json({
+    res.json({
       token,
       user: {
-        id: row.id,
-        name: row.name,
-        email: row.email,
-        role: row.role
+        id: r.id,
+        name: r.name,
+        email: r.email,
+        role: r.role
       },
       business: {
-        id: row.business_id,
-        name: row.business_name,
-        type: row.type,
-        currency: row.currency,
-        whatsapp: row.whatsapp
+        id: r.business_id,
+        name: r.business_name,
+        type: r.type,
+        currency: r.currency,
+        whatsapp: r.whatsapp
       }
     });
 
-  } catch (error) {
-    console.error('Login error:', error);
+  } catch (e) {
+    console.error(e);
 
-    return res.status(500).json({
+    res.status(500).json({
       error: 'Erreur de connexion.'
     });
   }
 });
 
-// --------------------------------------------------
-// PROFIL CONNECTÉ
-// --------------------------------------------------
-
 app.get('/api/me', auth, async (req, res) => {
-  if (!pool) {
-    return res.status(503).json({
-      error: 'Base de données indisponible.'
-    });
-  }
-
   try {
-    const result = await pool.query(
+    const q = await pool.query(
       `SELECT
         u.id,
         u.name,
         u.email,
         u.role,
-        b.id AS business_id,
-        b.name AS business_name,
+        b.id business_id,
+        b.name business_name,
         b.type,
         b.currency,
         b.whatsapp
        FROM users u
-       JOIN businesses b ON b.id = u.business_id
-       WHERE u.id = $1 AND b.id = $2`,
-      [
-        req.user.userId,
-        req.user.businessId
-      ]
+       JOIN businesses b ON b.id=u.business_id
+       WHERE u.id=$1 AND b.id=$2`,
+      [req.user.userId, req.user.businessId]
     );
 
-    if (!result.rowCount) {
+    if (!q.rowCount) {
       return res.status(404).json({
         error: 'Compte introuvable.'
       });
     }
 
-    const row = result.rows[0];
+    const r = q.rows[0];
 
-    return res.json({
+    res.json({
       user: {
-        id: row.id,
-        name: row.name,
-        email: row.email,
-        role: row.role
+        id: r.id,
+        name: r.name,
+        email: r.email,
+        role: r.role
       },
       business: {
-        id: row.business_id,
-        name: row.business_name,
-        type: row.type,
-        currency: row.currency,
-        whatsapp: row.whatsapp
+        id: r.business_id,
+        name: r.business_name,
+        type: r.type,
+        currency: r.currency,
+        whatsapp: r.whatsapp
       }
     });
 
-  } catch (error) {
-    console.error('Profile error:', error);
-
-    return res.status(500).json({
+  } catch (e) {
+    res.status(500).json({
       error: 'Erreur serveur.'
     });
   }
 });
 
-// --------------------------------------------------
-// LECTURE DES ENREGISTREMENTS
-// --------------------------------------------------
-
-app.get(
-  '/api/records/:kind',
-  auth,
-  validKind,
-  async (req, res) => {
-    if (!pool) {
-      return res.status(503).json({
-        error: 'Base de données indisponible.'
-      });
-    }
-
-    try {
-      const result = await pool.query(
-        `SELECT id, data, created_at, updated_at
-         FROM records
-         WHERE business_id = $1 AND kind = $2
-         ORDER BY created_at DESC`,
-        [
-          req.user.businessId,
-          req.params.kind
-        ]
-      );
-
-      return res.json(
-        result.rows.map(row => ({
-          id: row.id,
-          ...row.data,
-          createdAt: row.created_at,
-          updatedAt: row.updated_at
-        }))
-      );
-
-    } catch (error) {
-      console.error('Records read error:', error);
-
-      return res.status(500).json({
-        error: 'Lecture impossible.'
-      });
-    }
-  }
-);
-
-// --------------------------------------------------
-// CRÉATION D'UN ENREGISTREMENT
-// --------------------------------------------------
-
-app.post(
-  '/api/records/:kind',
-  auth,
-  validKind,
-  validObjectBody,
-  async (req, res) => {
-    if (!pool) {
-      return res.status(503).json({
-        error: 'Base de données indisponible.'
-      });
-    }
-
-    try {
-      const data = { ...req.body };
-
-      delete data.business_id;
-      delete data.businessId;
-      delete data.id;
-
-      const result = await pool.query(
-        `INSERT INTO records (business_id, kind, data)
-         VALUES ($1, $2, $3::jsonb)
-         RETURNING id, data, created_at, updated_at`,
-        [
-          req.user.businessId,
-          req.params.kind,
-          JSON.stringify(data)
-        ]
-      );
-
-      const row = result.rows[0];
-
-      return res.status(201).json({
-        id: row.id,
-        ...row.data,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at
-      });
-
-    } catch (error) {
-      console.error('Record create error:', error);
-
-      return res.status(500).json({
-        error: 'Enregistrement impossible.'
-      });
-    }
-  }
-);
-
-// --------------------------------------------------
-// MODIFICATION D'UN ENREGISTREMENT
-// --------------------------------------------------
-
-app.put(
-  '/api/records/:kind/:id',
-  auth,
-  validKind,
-  validObjectBody,
-  async (req, res) => {
-    if (!pool) {
-      return res.status(503).json({
-        error: 'Base de données indisponible.'
-      });
-    }
-
-    try {
-      const data = { ...req.body };
-
-      delete data.business_id;
-      delete data.businessId;
-      delete data.id;
-
-      const result = await pool.query(
-        `UPDATE records
-         SET data = $1::jsonb,
-             updated_at = NOW()
-         WHERE id = $2
-           AND business_id = $3
-           AND kind = $4
-         RETURNING id, data, updated_at`,
-        [
-          JSON.stringify(data),
-          req.params.id,
-          req.user.businessId,
-          req.params.kind
-        ]
-      );
-
-      if (!result.rowCount) {
-        return res.status(404).json({
-          error: 'Élément introuvable.'
-        });
-      }
-
-      const row = result.rows[0];
-
-      return res.json({
-        id: row.id,
-        ...row.data,
-        updatedAt: row.updated_at
-      });
-
-    } catch (error) {
-      console.error('Record update error:', error);
-
-      return res.status(500).json({
-        error: 'Modification impossible.'
-      });
-    }
-  }
-);
-
-// --------------------------------------------------
-// SUPPRESSION D'UN ENREGISTREMENT
-// --------------------------------------------------
-
-app.delete(
-  '/api/records/:kind/:id',
-  auth,
-  validKind,
-  async (req, res) => {
-    if (!pool) {
-      return res.status(503).json({
-        error: 'Base de données indisponible.'
-      });
-    }
-
-    try {
-      const result = await pool.query(
-        `DELETE FROM records
-         WHERE id = $1
-           AND business_id = $2
-           AND kind = $3`,
-        [
-          req.params.id,
-          req.user.businessId,
-          req.params.kind
-        ]
-      );
-
-      if (!result.rowCount) {
-        return res.status(404).json({
-          error: 'Élément introuvable.'
-        });
-      }
-
-      return res.json({
-        ok: true
-      });
-
-    } catch (error) {
-      console.error('Record delete error:', error);
-
-      return res.status(500).json({
-        error: 'Suppression impossible.'
-      });
-    }
-  }
-);
-
-// --------------------------------------------------
-// PARAMÈTRES DE PERSONNALISATION
-// --------------------------------------------------
-
-// Lire les paramètres de l'entreprise connectée
+// Paramètres et personnalisation de l'établissement
 app.get('/api/settings', auth, async (req, res) => {
-  if (!pool) {
-    return res.status(503).json({
-      error: 'Base de données indisponible.'
+  try {
+    const q = await pool.query(
+      'SELECT branding FROM business_settings WHERE business_id=$1',
+      [req.user.businessId]
+    );
+
+    res.json({
+      branding: q.rows[0]?.branding || {}
+    });
+
+  } catch (e) {
+    res.status(500).json({
+      error: 'Lecture des paramètres impossible.'
+    });
+  }
+});
+
+app.put('/api/settings', auth, ownerOnly, async (req, res) => {
+  try {
+    const branding = req.body?.branding;
+
+    if (
+      !branding ||
+      typeof branding !== 'object' ||
+      Array.isArray(branding)
+    ) {
+      return res.status(400).json({
+        error: 'Paramètres invalides.'
+      });
+    }
+
+    const serialized = JSON.stringify(branding);
+
+    if (serialized.length > 1400000) {
+      return res.status(413).json({
+        error: 'Logo ou paramètres trop volumineux.'
+      });
+    }
+
+    await pool.query(
+      `INSERT INTO business_settings(business_id,branding)
+       VALUES($1,$2::jsonb)
+       ON CONFLICT(business_id)
+       DO UPDATE SET
+         branding=EXCLUDED.branding,
+         updated_at=NOW()`,
+      [req.user.businessId, serialized]
+    );
+
+    res.json({ ok: true });
+
+  } catch (e) {
+    res.status(500).json({
+      error: 'Enregistrement des paramètres impossible.'
+    });
+  }
+});
+
+// Lecture des commandes, réservations, clients et produits
+app.get('/api/records/:kind', auth, async (req, res) => {
+  const { kind } = req.params;
+
+  if (!validKind(kind)) {
+    return res.status(400).json({
+      error: 'Catégorie invalide.'
     });
   }
 
   try {
-    const result = await pool.query(
-      `SELECT branding
-       FROM business_settings
-       WHERE business_id = $1`,
-      [req.user.businessId]
+    const q = await pool.query(
+      `SELECT id,data,created_at,updated_at
+       FROM records
+       WHERE business_id=$1 AND kind=$2
+       ORDER BY created_at DESC`,
+      [req.user.businessId, kind]
     );
 
-    return res.json({
-      branding: result.rowCount
-        ? result.rows[0].branding
-        : {}
-    });
+    res.json(
+      q.rows.map(r => ({
+        id: r.id,
+        ...r.data,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at
+      }))
+    );
 
-  } catch (error) {
-    console.error('Settings read error:', error);
-
-    return res.status(500).json({
-      error: 'Impossible de lire les paramètres.'
+  } catch (e) {
+    res.status(500).json({
+      error: 'Lecture impossible.'
     });
   }
 });
 
-// Enregistrer les paramètres de l'entreprise
-app.put(
-  '/api/settings',
-  auth,
-  ownerOnly,
-  validObjectBody,
-  async (req, res) => {
-    if (!pool) {
-      return res.status(503).json({
-        error: 'Base de données indisponible.'
-      });
-    }
+// Ajouter un élément
+app.post('/api/records/:kind', auth, async (req, res) => {
+  const { kind } = req.params;
 
-    try {
-      const branding = req.body.branding;
-
-      if (
-        !branding ||
-        typeof branding !== 'object' ||
-        Array.isArray(branding)
-      ) {
-        return res.status(400).json({
-          error: 'Paramètres de personnalisation invalides.'
-        });
-      }
-
-      const result = await pool.query(
-        `INSERT INTO business_settings
-          (business_id, branding, updated_at)
-         VALUES ($1, $2::jsonb, NOW())
-         ON CONFLICT (business_id)
-         DO UPDATE SET
-           branding = EXCLUDED.branding,
-           updated_at = NOW()
-         RETURNING branding, updated_at`,
-        [
-          req.user.businessId,
-          JSON.stringify(branding)
-        ]
-      );
-
-      return res.json({
-        ok: true,
-        branding: result.rows[0].branding,
-        updatedAt: result.rows[0].updated_at
-      });
-
-    } catch (error) {
-      console.error('Settings save error:', error);
-
-      return res.status(500).json({
-        error: 'Impossible de sauvegarder les paramètres.'
-      });
-    }
+  if (!validKind(kind)) {
+    return res.status(400).json({
+      error: 'Catégorie invalide.'
+    });
   }
-);
 
-// --------------------------------------------------
-// PAGE PRINCIPALE
-// --------------------------------------------------
+  try {
+    const data = { ...(req.body || {}) };
 
+    delete data.business_id;
+    delete data.businessId;
+    delete data.id;
+
+    const q = await pool.query(
+      `INSERT INTO records(business_id,kind,data)
+       VALUES($1,$2,$3::jsonb)
+       RETURNING id,data,created_at`,
+      [
+        req.user.businessId,
+        kind,
+        JSON.stringify(data)
+      ]
+    );
+
+    res.status(201).json({
+      id: q.rows[0].id,
+      ...q.rows[0].data,
+      createdAt: q.rows[0].created_at
+    });
+
+  } catch (e) {
+    res.status(500).json({
+      error: 'Enregistrement impossible.'
+    });
+  }
+});
+
+// Modifier un élément
+app.put('/api/records/:kind/:id', auth, async (req, res) => {
+  const { kind, id } = req.params;
+
+  if (!validKind(kind)) {
+    return res.status(400).json({
+      error: 'Catégorie invalide.'
+    });
+  }
+
+  try {
+    const data = { ...(req.body || {}) };
+
+    delete data.business_id;
+    delete data.businessId;
+    delete data.id;
+
+    const q = await pool.query(
+      `UPDATE records
+       SET data=$1::jsonb, updated_at=NOW()
+       WHERE id=$2 AND business_id=$3 AND kind=$4
+       RETURNING id,data,updated_at`,
+      [
+        JSON.stringify(data),
+        id,
+        req.user.businessId,
+        kind
+      ]
+    );
+
+    if (!q.rowCount) {
+      return res.status(404).json({
+        error: 'Élément introuvable.'
+      });
+    }
+
+    res.json({
+      id: q.rows[0].id,
+      ...q.rows[0].data,
+      updatedAt: q.rows[0].updated_at
+    });
+
+  } catch (e) {
+    res.status(500).json({
+      error: 'Modification impossible.'
+    });
+  }
+});
+
+// Supprimer un élément
+app.delete('/api/records/:kind/:id', auth, async (req, res) => {
+  const { kind, id } = req.params;
+
+  if (!validKind(kind)) {
+    return res.status(400).json({
+      error: 'Catégorie invalide.'
+    });
+  }
+
+  try {
+    const q = await pool.query(
+      `DELETE FROM records
+       WHERE id=$1 AND business_id=$2 AND kind=$3`,
+      [
+        id,
+        req.user.businessId,
+        kind
+      ]
+    );
+
+    if (!q.rowCount) {
+      return res.status(404).json({
+        error: 'Élément introuvable.'
+      });
+    }
+
+    res.json({ ok: true });
+
+  } catch (e) {
+    res.status(500).json({
+      error: 'Suppression impossible.'
+    });
+  }
+});
+
+// Servir l'application depuis public/index.html
 app.get('*', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(
+    path.join(__dirname, 'public', 'index.html')
+  );
 });
-
-// --------------------------------------------------
-// DÉMARRAGE
-// --------------------------------------------------
 
 initDb()
   .then(() => {
     app.listen(PORT, () => {
-      console.log(`Rapid Services listening on port ${PORT}`);
+      console.log(`Rapid Services listening on ${PORT}`);
     });
   })
-  .catch(error => {
-    console.error('Database initialization failed:', error);
+  .catch(e => {
+    console.error('Database initialization failed', e);
     process.exit(1);
   });
