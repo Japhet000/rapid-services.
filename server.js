@@ -79,6 +79,12 @@ async function initDb() {
       ON subscription_payments(method, LOWER(reference));
     CREATE INDEX IF NOT EXISTS subscription_payments_status_created_idx
       ON subscription_payments(status, created_at DESC);
+    CREATE TABLE IF NOT EXISTS employee_locations (
+      user_id BIGINT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      business_id BIGINT NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+      latitude DOUBLE PRECISION NOT NULL, longitude DOUBLE PRECISION NOT NULL,
+      accuracy DOUBLE PRECISION, shared_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
   `);
 }
 
@@ -102,7 +108,7 @@ function validKind(kind) {
 }
 
 app.get('/api/health', async (_req, res) => {
-  res.json({ ok: true, app: 'Rapid Services', database: !!pool, version: '3.2.0' });
+  res.json({ ok: true, app: 'Rapid Services', database: !!pool, version: '3.4.0' });
 });
 
 app.post('/api/auth/register', async (req, res) => {
@@ -162,6 +168,42 @@ app.post('/api/auth/login', async (req, res) => {
     res.status(500).json({ error: 'Erreur de connexion.' });
   }
 });
+
+// Owner-managed staff accounts. Employees belong to exactly one business.
+app.get('/api/team', auth, ownerOnly, async (req, res) => {
+  try {
+    const q = await pool.query(`SELECT u.id,u.name,u.email,u.role,u.created_at,
+      l.latitude,l.longitude,l.accuracy,l.shared_at
+      FROM users u LEFT JOIN employee_locations l ON l.user_id=u.id AND l.business_id=u.business_id
+      WHERE u.business_id=$1 AND u.role='employee' ORDER BY u.created_at DESC`, [req.user.businessId]);
+    res.json({ employees: q.rows });
+  } catch (e) { console.error(e); res.status(500).json({error:'Impossible de charger le personnel.'}); }
+});
+app.post('/api/team', auth, ownerOnly, async (req, res) => {
+  try {
+    const {name,email,password}=req.body||{};
+    const cleanEmail=String(email||'').toLowerCase().trim();
+    if(!name||!cleanEmail||String(password||'').length<10) return res.status(400).json({error:'Nom, e-mail et mot de passe de 10 caractères minimum requis.'});
+    const hash=await bcrypt.hash(password,12);
+    const q=await pool.query(`INSERT INTO users(business_id,name,email,password_hash,role) VALUES($1,$2,$3,$4,'employee') RETURNING id,name,email,role`,[req.user.businessId,String(name).trim(),cleanEmail,hash]);
+    res.status(201).json({employee:q.rows[0]});
+  } catch(e) { if(e.code==='23505') return res.status(409).json({error:'Cet e-mail est déjà utilisé.'}); console.error(e);res.status(500).json({error:'Création du compte employé impossible.'}); }
+});
+app.delete('/api/team/:id', auth, ownerOnly, async (req,res)=>{
+  try { const q=await pool.query("DELETE FROM users WHERE id=$1 AND business_id=$2 AND role='employee'",[req.params.id,req.user.businessId]); if(!q.rowCount)return res.status(404).json({error:'Employé introuvable.'});res.json({ok:true}); }
+  catch(e){console.error(e);res.status(500).json({error:'Suppression impossible.'});}
+});
+// Location is opt-in: employee browser permission is required. Updates only while app is open.
+app.post('/api/location', auth, async (req,res)=>{
+  try {
+    const {latitude,longitude,accuracy}=req.body||{};
+    if(req.user.role!=='employee') return res.status(403).json({error:'Cette fonction est réservée aux comptes employés.'});
+    if(!Number.isFinite(latitude)||!Number.isFinite(longitude)||Math.abs(latitude)>90||Math.abs(longitude)>180) return res.status(400).json({error:'Coordonnées GPS invalides.'});
+    await pool.query(`INSERT INTO employee_locations(user_id,business_id,latitude,longitude,accuracy,shared_at) VALUES($1,$2,$3,$4,$5,NOW()) ON CONFLICT(user_id) DO UPDATE SET business_id=EXCLUDED.business_id,latitude=EXCLUDED.latitude,longitude=EXCLUDED.longitude,accuracy=EXCLUDED.accuracy,shared_at=NOW()`,[req.user.userId,req.user.businessId,latitude,longitude,Number.isFinite(accuracy)?accuracy:null]);
+    res.json({ok:true,sharedAt:new Date().toISOString()});
+  } catch(e){console.error(e);res.status(500).json({error:'Envoi de la position impossible.'});}
+});
+app.delete('/api/location', auth, async (req,res)=>{try{await pool.query('DELETE FROM employee_locations WHERE user_id=$1 AND business_id=$2',[req.user.userId,req.user.businessId]);res.json({ok:true});}catch(e){res.status(500).json({error:'Arrêt du partage impossible.'});}});
 
 app.get('/api/me', auth, async (req, res) => {
   try {
@@ -355,6 +397,13 @@ app.put('/api/records/:kind/:id', auth, async (req, res) => {
   const { kind, id } = req.params;
   if (!validKind(kind)) return res.status(400).json({ error: 'Catégorie invalide.' });
   try {
+    const existing = await pool.query('SELECT data FROM records WHERE id=$1 AND business_id=$2 AND kind=$3',[id,req.user.businessId,kind]);
+    if (!existing.rowCount) return res.status(404).json({ error: 'Élément introuvable.' });
+    const old = existing.rows[0].data || {};
+    const locked = kind==='orders' && (String(old.status||'').toLowerCase()==='terminé' || String(old.status||'').toLowerCase()==='completed' || String(old.paymentStatus||'').toLowerCase()==='payé' || String(old.paymentStatus||'').toLowerCase()==='paid');
+    const incoming = req.body || {};
+    const employeeProtected = kind==='orders' && (locked || Number(old.paidAmount||0)>0 || Number(incoming.paidAmount||0)>0 || ['terminé','completed'].includes(String(incoming.status||'').toLowerCase()) || ['payé','paid'].includes(String(incoming.paymentStatus||'').toLowerCase()));
+    if (req.user.role!=='owner' && employeeProtected) return res.status(403).json({error:'Cette facture ou commande payée/terminée est protégée. Contactez le propriétaire.'});
     const data = { ...(req.body || {}) };
     delete data.business_id; delete data.businessId; delete data.id;
     const q = await pool.query(
@@ -371,6 +420,12 @@ app.delete('/api/records/:kind/:id', auth, async (req, res) => {
   const { kind, id } = req.params;
   if (!validKind(kind)) return res.status(400).json({ error: 'Catégorie invalide.' });
   try {
+    const existing = await pool.query('SELECT data FROM records WHERE id=$1 AND business_id=$2 AND kind=$3',[id,req.user.businessId,kind]);
+    if (!existing.rowCount) return res.status(404).json({ error: 'Élément introuvable.' });
+    const old = existing.rows[0].data || {};
+    const locked = kind==='orders' && (['terminé','completed'].includes(String(old.status||'').toLowerCase()) || ['payé','paid'].includes(String(old.paymentStatus||'').toLowerCase()));
+    if (req.user.role!=='owner' && (locked || (kind==='orders' && Number(old.paidAmount||0)>0))) return res.status(403).json({error:'Cette facture est verrouillée. Seul le propriétaire peut intervenir.'});
+    if (req.user.role!=='owner' && kind==='orders' && Number(old.paidAmount||0)>0) return res.status(403).json({error:'Une commande avec paiement ne peut pas être supprimée par un employé.'});
     const q = await pool.query(
       'DELETE FROM records WHERE id=$1 AND business_id=$2 AND kind=$3',
       [id, req.user.businessId, kind]
