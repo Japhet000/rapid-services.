@@ -864,6 +864,8 @@ function scheduleDailySnapshot(){
   setTimeout(async()=>{try{await snapshotDailyRevenue();}catch(e){console.error('Daily report snapshot failed',e);}scheduleDailySnapshot();},Math.max(1000,target-now));
 }
 
+// Landing page is served at "/" (public/index.html); the application lives at "/app".
+app.get(['/app', '/app/*'], (_req, res) => res.sendFile(path.join(__dirname, 'public', 'app.html')));
 app.get('*', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 initDb().then(async () => {
   // Catch up the last completed business day after a restart/deploy that happened
